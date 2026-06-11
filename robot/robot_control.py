@@ -99,49 +99,49 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
 
     # ── Posture (Level 2) ──
     elif command in ("look-up", "look_up"):
-        move.head_move(pitch_deg=20, yaw_deg=0, time_uni=max(duration, time_acc), time_acc=time_acc)
+        move.head_move(pitch_deg=20, yaw_deg=0, time_uni=duration, time_acc=time_acc)
 
     elif command in ("look-down", "look_down"):
-        move.head_move(pitch_deg=-20, yaw_deg=0, time_uni=max(duration, time_acc), time_acc=time_acc)
+        move.head_move(pitch_deg=-20, yaw_deg=0, time_uni=duration, time_acc=time_acc)
         # move.stop(time=0.1)
 
     elif command in ("look-right", "look_right"):
-        move.head_move(pitch_deg=0, yaw_deg=30, time_uni=max(duration, time_acc), time_acc=time_acc)
+        move.head_move(pitch_deg=0, yaw_deg=30, time_uni=duration, time_acc=time_acc)
 
     elif command in ("look-left", "look_left"):
-        move.head_move(pitch_deg=0, yaw_deg=-30, time_uni=max(duration, time_acc), time_acc=time_acc)
+        move.head_move(pitch_deg=0, yaw_deg=-30, time_uni=duration, time_acc=time_acc)
 
     elif command in ("look-upper-left", "look_upperleft", "upper-left", "upperleft"):
-        move.head_move(pitch_deg=15, yaw_deg=-20, time_uni=max(duration, time_acc), time_acc=time_acc)
+        move.head_move(pitch_deg=15, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
         
 
     elif command in ("look-upper-right", "look_upperright", "upper-right", "upperright"):
-        move.head_move(pitch_deg=15, yaw_deg=20, time_uni=max(duration, time_acc), time_acc=time_acc)
+        move.head_move(pitch_deg=15, yaw_deg=20, time_uni=duration, time_acc=time_acc)
         
 
     elif command in ("raise-body", "raise_body", "raise"):
-        move.height_move(ht=0.03, time_uni=max(duration, 0.5), time_acc=0.5)
+        move.height_move(ht=0.03, time_uni=duration, time_acc=time_acc)
 
     elif command in ("lower-body", "lower_body", "lower"):
-        move.height_move(ht=-0.03, time_uni=max(duration, 0.5), time_acc=0.5)
+        move.height_move(ht=-0.03, time_uni=duration, time_acc=time_acc)
 
     elif command == "squat":
-        move.height_move(ht=-0.04, time_uni=max(duration, 0.5), time_acc=0.5)
+        move.height_move(ht=-0.04, time_uni=duration, time_acc=time_acc)
         move.stop(time=1.5)
 
     elif command in ("body-row", "body_row", "roll"):
-        move.body_row(row_deg=angle if angle else 10, time_uni=max(duration if duration else 1.0, time_acc), time_acc=time_acc)
+        move.body_row(row_deg=angle if angle else 10, time_uni=duration, time_acc=time_acc)
 
     # ── Standing / Activation ──
     elif command in ("stop", "idle"):
         move.stop(time=max(duration, 1.0))
 
     elif command in ("activate", "init", "stand"):
-        move.height_move(ht=0.03, time_uni=0.5, time_acc=0.5)
+        move.height_move(ht=0.03, time_uni=duration, time_acc=time_acc)
         move.stop(time=0.3)
 
     elif command in ("deactivate", "sit", "rest"):
-        move.height_move(ht=-0.04, time_uni=0.5, time_acc=0.5)
+        move.height_move(ht=-0.04, time_uni=duration, time_acc=time_acc)
         move.stop(time=0.3)
 
     # ── Sequences ──
@@ -197,20 +197,20 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
               
         
     elif command == "backleg_lift":
-        move.backleg_lift("right", ht=0.01, time_uni=1.5, time_acc=0.15)
+        move.backleg_lift("right", ht=0.01, time_uni=duration, time_acc=time_acc)
         move.stop(time=0.1)    
         
     elif command == "greet":
-        move.foreleg_lift("right", ht=0.04, time_uni=1.0, time_acc=0.5)
+        move.foreleg_lift("right", ht=0.04, time_uni=duration, time_acc=time_acc)
         move.stop(time=0.1)
-        move.foreleg_lift("left", ht=0.05, time_uni=1.0, time_acc=0.5)
+        move.foreleg_lift("left", ht=0.05, time_uni=duration, time_acc=time_acc)
         move.stop(time=0.1)
 
     elif command in ("front_kick", "rear_up"):
         # Phase 1: Snap front legs up with max height + pitch back
-        move.front_kick(ht=0.06, pitch_deg=20, time_uni=0.8, time_acc=0.08)
+        move.front_kick(ht=0.06, pitch_deg=20, time_uni=duration, time_acc=time_acc)
         # Phase 2: Return to default standing
-        move.front_kick_to_stand(time_uni=0.5, time_acc=0.3)
+        move.front_kick_to_stand(time_uni=duration, time_acc=time_acc)
         # Phase 3: Settle
         move.stop(time=0.2)
 
@@ -218,28 +218,31 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
 
     elif command == "headbang":
         """Rapid body pitch oscillation — looks like human headbanging."""
-        _sub_cycle = time_acc * 2  # 2 sub-moves × time_acc each
-        reps = max(1, int((time_acc + duration) / _sub_cycle)) if duration > 0 else 2
+        _n_subs = 2
+        reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
+        _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
         for _ in range(reps):
-            move.head_move(pitch_deg=20, yaw_deg=0, time_uni=time_acc, time_acc=time_acc)
-            move.head_move(pitch_deg=-20, yaw_deg=0, time_uni=time_acc, time_acc=time_acc)
+            move.head_move(pitch_deg=20, yaw_deg=0, time_uni=_sub_hold, time_acc=time_acc)
+            move.head_move(pitch_deg=-20, yaw_deg=0, time_uni=_sub_hold, time_acc=time_acc)
 
     elif command == "bounce":
         """Body bob — raise on upbeats, lower on downbeats."""
-        _sub_cycle = time_acc * 3  # 2 height moves + 1 stop = 3 × time_acc
-        reps = max(1, int((time_acc + duration) / _sub_cycle)) if duration > 0 else 2
+        _n_subs = 3
+        reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
+        _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
         for _ in range(reps):
-            move.height_move(ht=0.03, time_uni=time_acc, time_acc=time_acc)
-            move.height_move(ht=-0.03, time_uni=time_acc, time_acc=time_acc)
+            move.height_move(ht=0.03, time_uni=_sub_hold, time_acc=time_acc)
+            move.height_move(ht=-0.03, time_uni=_sub_hold, time_acc=time_acc)
             move.stop(time=0.1)
 
     elif command in ("swagger", "body-roll"):
         """Groovy body roll — side-to-side tilt."""
-        _sub_cycle = time_acc * 2  # 2 body-row moves = 2 × time_acc
-        reps = max(1, int((time_acc + duration) / _sub_cycle)) if duration > 0 else 2
+        _n_subs = 2
+        reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
+        _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
         for _ in range(reps):
-            move.body_row(row_deg=15, time_uni=time_acc, time_acc=time_acc)
-            move.body_row(row_deg=-15, time_uni=time_acc, time_acc=time_acc)
+            move.body_row(row_deg=15, time_uni=_sub_hold, time_acc=time_acc)
+            move.body_row(row_deg=-15, time_uni=_sub_hold, time_acc=time_acc)
 
     elif command == "spin":
         """Dramatic rotation — 180 deg spin then 90 deg back."""
@@ -291,10 +294,12 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
     elif command == "nod":
         """Subtle head nod — small 5 deg pitch oscillation."""
         _sub_cycle = time_acc * 3  # 2 head moves + 1 stop = 3 × time_acc
-        reps = max(1, int((time_acc + duration) / _sub_cycle)) if duration > 0 else 2
+        _n_subs = 3
+        reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
+        _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
         for _ in range(reps):
-            move.head_move(pitch_deg=5, yaw_deg=0, time_uni=time_acc, time_acc=time_acc)
-            move.head_move(pitch_deg=-5, yaw_deg=0, time_uni=time_acc, time_acc=time_acc)
+            move.head_move(pitch_deg=5, yaw_deg=0, time_uni=_sub_hold, time_acc=time_acc)
+            move.head_move(pitch_deg=-5, yaw_deg=0, time_uni=_sub_hold, time_acc=time_acc)
             move.stop(time=0.1)
 
     elif command == "lean":
@@ -333,6 +338,50 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         # Phase 3: Return to standing
         move.height_move(ht=0.01, time_uni=0.3, time_acc=0.2)
         move.stop(time=0.2)
+
+    # ── Genre Signatures ────────────────────────────────────────
+    elif command == "sig:rock":
+        """🤘 Head Oscillation — head traces a fast ellipse (head_ellipse)."""
+        move.head_ellipse()
+        move.stop(time=0.1)
+
+    elif command == "sig:pop":
+        """🎤 Swim — all 4 legs trace circles, body swims in place (body_cycle)."""
+        move.body_cycle()
+        move.stop(time=0.1)
+
+    elif command == "head_cycle":
+        """🤘 Quick head oscillation — 8-point ellipse in ~0.6s."""
+        from src.MovementScheme import Movements as _Mv
+        _h = _Mv('head_cycle')
+        _h.setTransitionTic(3)
+        _h.setInterpolationNumber(5)
+        _h.setLegsSequence(move.default_stand)
+        _h.setAttitudeSequence([
+            [0, 0,    15], [0, 10,  10], [0, 15,  0],
+            [0, 10,  -10], [0, 0,  -15], [0, -10,-10],
+            [0, -15,  0],  [0, -10, 10],
+        ], "single", 1)
+        _h.setSpeedSequence([[0,0,0]], "single", 1)
+        _h.setTurnSequence([[0,0,0]])
+        move.MovementLib.append(_h)
+    
+    elif command == "swim":
+        """🎤 Quick body cycle — 8-point leg circle in ~0.6s."""
+        from src.MovementScheme import Movements as _Mv
+        import numpy as np
+        _r = 0.04
+        _legs = []
+        for _lx, _ly in [(0.06,-0.05),(0.06,0.05),(-0.06,-0.05),(-0.06,0.05)]:
+            _legs.append([[ _lx+np.cos(a*0.785)*_r, _ly+np.sin(a*0.785)*_r, -0.07] for a in range(1, 9)])
+        _s = _Mv('swim')
+        _s.setTransitionTic(3)
+        _s.setInterpolationNumber(5)
+        _s.setLegsSequence(_legs, "single", 1)
+        _s.setSpeedSequence([[0,0,0]]*8, "single", 1)
+        _s.setAttitudeSequence([[0,0,0]]*8, "single", 1)
+        _s.setTurnSequence([[0,0,0]])
+        move.MovementLib.append(_s)
 
     else:
         raise ValueError(f"Unknown command: {command}")

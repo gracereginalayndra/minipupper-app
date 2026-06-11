@@ -25,11 +25,11 @@ GENRE_POOLS = {
     "rock": {
         "moves": [
             "headbang", "bounce", "swagger", "dip", "lean", "front_kick", "look-up", "body-row",
-            "nod", "raise-body",
+            "nod", "raise-body", "sig:rock",
         ],
         "weights": [
             0.25, 0.12, 0.10, 0.05, 0.04, 0.03, 0.02, 0.02,
-            0.01, 0.01,
+            0.01, 0.01, 0.2,
         ],
     },
     "classical": {
@@ -45,11 +45,11 @@ GENRE_POOLS = {
     "pop": {
         "moves": [
             "bounce", "swagger", "dip", "headbang", "lean", "greet", "nod", "look-up",
-            "body-row", "squat",
+            "body-row", "squat", "sig:pop",
         ],
         "weights": [
-            0.15, 0.10, 0.05, 0.05, 0.04, 0.03, 0.03, 0.02,
-            0.02, 0.02,
+            0.05, 0.10, 0.15, 0.05, 0.04, 0.03, 0.03, 0.02,
+            0.02, 0.02, 0.2,
         ],
     },
     "disco": {
