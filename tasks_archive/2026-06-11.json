@@ -1,0 +1,163 @@
+{
+  "task-dd97e34403ce": {
+    "taskId": "task-dd97e34403ce",
+    "action": "robot.search_dance",
+    "params": {
+      "query": "I Will Always Love You"
+    },
+    "userQuery": "",
+    "status": "completed",
+    "phase": "done",
+    "progress": 100,
+    "message": "Found 'I Will Always Love You' by Whitney Houston - awaiting user confirmation",
+    "result": {
+      "summary": "I found 'I Will Always Love You' by Whitney Houston (https://youtube.com/watch?v=3JWTaaS7LdU). Should I dance to it?",
+      "url": "https://youtube.com/watch?v=3JWTaaS7LdU",
+      "title": "Whitney Houston - I Will Always Love You (Official 4K Video)",
+      "channel": "Whitney Houston",
+      "genre": "pop",
+      "genre_display": "\ud83c\udfa4 Pop",
+      "feedback_required": true
+    },
+    "error": null,
+    "announced": false,
+    "createdAt": 1781141533.6171875,
+    "updatedAt": 1781141568.9050965,
+    "executionTime": 35.28790903091431
+  },
+  "task-c5806e90ca66": {
+    "taskId": "task-c5806e90ca66",
+    "action": "robot.search_dance",
+    "params": {
+      "query": "I Will Always Love You"
+    },
+    "userQuery": "",
+    "status": "completed",
+    "phase": "awaiting_confirmation",
+    "progress": 100,
+    "message": "Found song - awaiting user confirmation",
+    "result": {
+      "summary": "I found 'Whitney Houston - I Will Always Love You (Official 4K Video)' by Whitney Houston (https://youtube.com/watch?v=3JWTaaS7LdU). Should I dance to it?",
+      "url": "https://youtube.com/watch?v=3JWTaaS7LdU",
+      "title": "Whitney Houston - I Will Always Love You (Official 4K Video)",
+      "channel": "Whitney Houston",
+      "genre": "pop",
+      "genre_display": "\ud83c\udfa4 Pop",
+      "feedback_required": true
+    },
+    "error": null,
+    "announced": false,
+    "createdAt": 1781141954.948318,
+    "updatedAt": 1781141989.7576134,
+    "executionTime": 34.809295415878296
+  },
+  "task-f8c6029a2636": {
+    "taskId": "task-f8c6029a2636",
+    "action": "robot.dance_to_audio",
+    "params": {
+      "url": "https://youtube.com/watch?v=3JWTaaS7LdU",
+      "genre": "pop"
+    },
+    "userQuery": "",
+    "status": "stopped",
+    "phase": "stopped",
+    "progress": 100,
+    "message": "Dance stopped by user",
+    "result": null,
+    "error": null,
+    "announced": false,
+    "createdAt": 1781142009.8543448,
+    "updatedAt": 1781142253.8080666,
+    "executionTime": 243.9537217617035
+  },
+  "task-4c466825bfde": {
+    "taskId": "task-4c466825bfde",
+    "action": "robot.search_dance",
+    "params": {
+      "query": "I will always love you"
+    },
+    "userQuery": "",
+    "status": "completed",
+    "phase": "done",
+    "progress": 100,
+    "message": "Found song - awaiting user confirmation",
+    "result": {
+      "summary": "I found \"Whitney Houston - I Will Always Love You\" by Whitney Houston (https://youtube.com/watch?v=3JWTaaS7LdU). Should I dance to it?",
+      "url": "https://youtube.com/watch?v=3JWTaaS7LdU",
+      "title": "Whitney Houston - I Will Always Love You (Official 4K Video)",
+      "channel": "Whitney Houston",
+      "genre": "pop",
+      "genre_display": "\ud83c\udfa4 Pop",
+      "feedback_required": true
+    },
+    "error": null,
+    "announced": false,
+    "createdAt": 1781142335.12546,
+    "updatedAt": 1781142390.5316863,
+    "executionTime": 55.40622639656067
+  },
+  "task-6bcede679aed": {
+    "taskId": "task-6bcede679aed",
+    "action": "robot.stop_dance",
+    "params": {},
+    "userQuery": "",
+    "status": "completed",
+    "phase": "done",
+    "progress": 100,
+    "message": "Dance stopped successfully",
+    "result": {
+      "ok": true,
+      "message": "Dance stopped."
+    },
+    "error": null,
+    "announced": false,
+    "createdAt": 1781142612.878129,
+    "updatedAt": 1781142636.516229,
+    "executionTime": 23.638099908828735
+  },
+  "task-487ba442a943": {
+    "taskId": "task-487ba442a943",
+    "action": "robot.dance_to_audio",
+    "params": {
+      "url": "https://youtube.com/watch?v=3JWTaaS7LdU",
+      "genre": "pop"
+    },
+    "userQuery": "",
+    "status": "stopped",
+    "phase": "stopped",
+    "progress": 100,
+    "message": "Dance stopped by user",
+    "result": null,
+    "error": null,
+    "announced": false,
+    "createdAt": 1781142448.2777972,
+    "updatedAt": 1781142632.8081021,
+    "executionTime": 184.53030490875244
+  },
+  "task-157280f3c94b": {
+    "taskId": "task-157280f3c94b",
+    "action": "robot.search_dance",
+    "params": {
+      "query": "September"
+    },
+    "userQuery": "",
+    "status": "completed",
+    "phase": "done",
+    "progress": 100,
+    "message": "Found song - awaiting user confirmation",
+    "result": {
+      "summary": "I found 'Earth, Wind & Fire - September (Official HD Video)' by Earth Wind & Fire (https://youtube.com/watch?v=Gs069dndIYk). Should I dance to it?",
+      "url": "https://youtube.com/watch?v=Gs069dndIYk",
+      "title": "Earth, Wind & Fire - September (Official HD Video)",
+      "channel": "Earth Wind & Fire",
+      "genre": "pop",
+      "genre_display": "\ud83c\udfa4 Pop",
+      "feedback_required": true
+    },
+    "error": null,
+    "announced": false,
+    "createdAt": 1781144643.4650652,
+    "updatedAt": 1781144675.687846,
+    "executionTime": 32.22278070449829
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "task-e0d44adb07ca": {
+    "taskId": "task-e0d44adb07ca",
+    "action": "robot.dance_to_audio",
+    "params": {
+      "url": "https://youtube.com/watch?v=aqZxIL4YE2I",
+      "genre": "pop"
+    },
+    "userQuery": "",
+    "status": "stopped",
+    "phase": "stopped",
+    "progress": 100,
+    "message": "Dance stopped by user",
+    "result": null,
+    "error": null,
+    "announced": true,
+    "createdAt": 1781079022.723396,
+    "updatedAt": 1781079158.7203436
+  }
+}

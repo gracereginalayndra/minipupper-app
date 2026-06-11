@@ -1,0 +1,41 @@
+{
+  "tasks": {
+    "task-8a24110134cd": {
+      "taskId": "task-8a24110134cd",
+      "action": "robot.dance_to_audio",
+      "params": {
+        "url": "https://youtube.com/watch?v=Gs069dndIYk",
+        "genre": "pop"
+      },
+      "userQuery": "",
+      "status": "pending",
+      "phase": "queued",
+      "progress": 0,
+      "message": "Waiting for agent...",
+      "result": null,
+      "error": null,
+      "announced": false,
+      "createdAt": 1781077522.5898526,
+      "updatedAt": 1781077522.5898533,
+      "startedAt": 1781077555.946239
+    },
+    "task-8c9cfcaf66dd": {
+      "taskId": "task-8c9cfcaf66dd",
+      "action": "web_search",
+      "params": {
+        "query": "weather in Jakarta today"
+      },
+      "userQuery": "",
+      "status": "pending",
+      "phase": "queued",
+      "progress": 0,
+      "message": "Waiting for agent...",
+      "result": null,
+      "error": null,
+      "announced": false,
+      "createdAt": 1781077855.8274927,
+      "updatedAt": 1781077855.8274934,
+      "startedAt": 1781077886.2783253
+    }
+  }
+}
