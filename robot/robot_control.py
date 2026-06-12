@@ -82,7 +82,7 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         move.gait_uni(v_x=SPEED, v_y=0, time_uni=duration, time_acc=ACCEL)
 
     elif command in ("backward", "b"):
-        move.gait_uni(v_x=-SPEED, v_y=0, time_uni=duration, time_acc=ACCEL)
+        move.gait_uni(v_x=-SPEED, v_y=0, time_uni=1, time_acc=ACCEL)
 
     elif command in ("right", "r"):
         move.gait_uni(v_x=0, v_y=-SPEED, time_uni=duration, time_acc=ACCEL)
@@ -222,8 +222,8 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
         _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
         for _ in range(reps):
-            move.head_move(pitch_deg=20, yaw_deg=0, time_uni=_sub_hold, time_acc=time_acc)
-            move.head_move(pitch_deg=-20, yaw_deg=0, time_uni=_sub_hold, time_acc=time_acc)
+            move.head_move(pitch_deg=25, yaw_deg=0, time_uni=_sub_hold, time_acc=time_acc)
+            move.head_move(pitch_deg=-25, yaw_deg=0, time_uni=_sub_hold, time_acc=time_acc)
 
     elif command == "bounce":
         """Body bob — raise on upbeats, lower on downbeats."""
@@ -382,6 +382,45 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         _s.setAttitudeSequence([[0,0,0]]*8, "single", 1)
         _s.setTurnSequence([[0,0,0]])
         move.MovementLib.append(_s)
+
+    elif command == "twerk":
+    #     """🍑 Twerk — rapid up/down body movement with optional roll."""      
+        _n_subs = 2
+        reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
+        _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
+        for _ in range(reps):
+            move.head_move(pitch_deg=-30, yaw_deg=0, time_uni=duration, time_acc=time_acc)
+            move.twerk(ht=-0.02, time_uni=duration, time_acc=time_acc)
+        # move.twerk(pitch_deg = -30, ht = 0.03, time_uni = 1, time_acc = 1)
+
+    elif command == "wiggle":
+    #     """🍑 wiggle — rapid left/right butt movement with optional roll."""      
+        _n_subs = 2
+        reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
+        _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
+        for _ in range(reps):
+            move.head_move(pitch_deg=-25, yaw_deg=0, time_uni=duration, time_acc=time_acc)
+            move.head_move(pitch_deg=-25, yaw_deg=20, time_uni=duration, time_acc=time_acc)
+            move.stop_wiggle (time=0.1)
+            move.head_move(pitch_deg=-25, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
+            move.stop_wiggle (time=0.1)
+        # move.twerk(pitch_deg = -30, ht = 0.03, time_uni = 1, time_acc = 1)
+
+    elif command == "shoulder_shrug":
+        move.head_move(pitch_deg=-25, yaw_deg=0, time_uni=duration, time_acc=time_acc)
+        move.head_move(pitch_deg=-25, yaw_deg=20, time_uni=duration, time_acc=time_acc)
+        move.stop (time=0.1)
+        move.head_move(pitch_deg=-25, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
+        move.stop (time=0.1)
+
+    elif command == "butt_shrug":  
+        move.head_move(pitch_deg=25, yaw_deg=0, time_uni=duration, time_acc=time_acc)
+        move.head_move(pitch_deg=25, yaw_deg=20, time_uni=duration, time_acc=time_acc)
+        move.stop (time=0.1)
+        move.head_move(pitch_deg=25, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
+        move.stop (time=0.1)
+    
+        
 
     else:
         raise ValueError(f"Unknown command: {command}")
