@@ -72,6 +72,26 @@ class MovementGroups:
         dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
         self.MovementLib.append(dance_scheme)      # append dance
         return self.MovementLib
+
+    def stop_wiggle(self, time = 1):
+        """Return to the default natural standing position
+        Args:
+            time: let the robot be still in the defaut state for a certain period (unit: second)
+        Returns:
+        	Append the default standing position into MovementLib
+        """
+        if time <=0:
+            time = self.dt
+        interval = int(time / self.dt)
+        dance_scheme = Movements('stop')
+        dance_all_legs = self.default_stand
+        dance_speed = [[0,0,0],[0,0,0]]        # speed_x, speed_y, no_use
+        dance_attitude = [[0,-25,0]]     # roll, pitch, yaw degree
+        dance_scheme.setInterpolationNumber(interval)
+        dance_scheme.setTransitionTic(70)
+        dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
+        self.MovementLib.append(dance_scheme)      # append dance
+        return self.MovementLib
  
     def look_up(self):  
         """Set robot look up 20deg, you can change the deg parameter in this function.
@@ -108,6 +128,19 @@ class MovementGroups:
         dance_all_legs = self.default_stand
         dance_speed = [[0,0,0]]       # speed_x, speed_y, no_use
         dance_attitude = [[0,0,30]]   # roll, pitch, yaw degree
+        dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
+        self.MovementLib.append(dance_scheme)      # append dance
+        return self.MovementLib
+
+    def wiggle(self):
+        """Set robot wiggle, you can change the deg parameter in this function.
+        Returns:
+        	Append the wiggle movement into MovementLib
+        """
+        dance_scheme = Movements('wiggle')
+        dance_all_legs = self.default_stand
+        dance_speed = [[0,0,0]]       # speed_x, speed_y, no_use
+        dance_attitude = [[0,-30,30]]   # roll, pitch, yaw degree
         dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
         self.MovementLib.append(dance_scheme)      # append dance
         return self.MovementLib
@@ -317,6 +350,39 @@ class MovementGroups:
         dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
         self.MovementLib.append(dance_scheme)      # append dance
         return self.MovementLib
+
+    # def wiggle(self, pitch_deg = 0, yaw_deg = 0, time_uni = 1, time_acc = 1):
+    #     """Turn the head of the robot to a certain degree
+    #     Args: 
+    #         Pitch_deg: the angle you want the robot's head to look up or down 
+    #                     e.g. 20 ----> the pupper will lookup 20 degrees from pupper's own perspective
+    #         yaw_deg: the angle you want the robot's head to look left or right 
+    #                     e.g. 20 ----> the pupper will look right 20 degrees from pupper's own perspective
+    #         time_acc: how long it takes to reach the desired angle (unit: second)
+    #         time_uni: how long pupper will keep still at the desired pose (unit: second)
+        
+    #     Return:
+    #         Append the head turning movement into the MovementLib
+    #     """ 
+    #     if time_uni <= 0:
+    #         time_uni = self.dt
+    #     if time_acc <=0:
+    #         time_acc = self.dt
+    #     interval_uni = int(time_uni / self.dt)
+    #     interval_acc = int(time_acc / self.dt)
+    #     modified_pitch = self.cap_limit(self.pitchcap, -self.pitchcap, pitch_deg)
+    #     modified_yaw = self.cap_limit(self.yawcap, -self.yawcap, yaw_deg)
+    #     dance_scheme = Movements('wiggle')
+    #     dance_all_legs = self.default_stand
+    #     dance_speed = [[0,0,0]]        # speed_x, speed_y, no_use
+    #     dance_attitude = [[0,pitch_deg,yaw_deg],[0,pitch_deg,yaw_deg]]     # roll, pitch, yaw degree
+    #     dance_scheme.setInterpolationNumber(interval_uni)
+    #     dance_scheme.setTransitionTic(interval_acc)
+    #     dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
+    #     self.MovementLib.append(dance_scheme)      # append dance
+    #     return self.MovementLib
+
+        
         
     def body_row(self, row_deg = 0, time_uni = 1, time_acc = 1):
         """Set the robot to tilt its body to a certain angle
@@ -394,6 +460,38 @@ class MovementGroups:
         dance_all_legs = [
             [[ 0.06,-0.05,-0.07-modified_ht],[ 0.06,-0.05,-0.07-modified_ht]],
             [[ 0.06, 0.05,-0.07-modified_ht],[ 0.06, 0.05,-0.07-modified_ht]],
+            [[-0.06,-0.05,-0.07-modified_ht],[-0.06,-0.05,-0.07-modified_ht]],
+            [[-0.06, 0.05,-0.07-modified_ht],[-0.06, 0.05,-0.07-modified_ht]]
+        ]
+        dance_speed = [[0,0,0]]        # speed_x, speed_y, no_use
+        dance_attitude = [[0,0,0]]     # roll, pitch, yaw degree
+        dance_scheme.setTransitionTic(interval_acc)
+        dance_scheme.setInterpolationNumber(interval_uni) 
+        dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
+        self.MovementLib.append(dance_scheme)      # append dance
+        return self.MovementLib
+
+    def twerk(self, ht = 0, time_uni = 1, time_acc = 1):
+        """Let robot descend or ascend a given height
+        Args:
+            ht: the distance you want the robot to ascend or descend 
+                e.g. ht = 0.02 ----> let pupper ascend 0.02m
+            time_acc: how long it takes to ascend or descend (unit: second)
+            time_uni: how long pupper will hold the position after ascending or descending (unit:second)
+        Return:
+            Append the height movement into the MovementLib
+        """
+        if time_uni <= 0:
+            time_uni = self.dt
+        if time_acc <=0:
+            time_acc = self.dt
+        interval_uni = int(time_uni / self.dt)
+        interval_acc = int(time_acc / self.dt)
+        modified_ht = self.cap_limit(self.highcap, -self.lowcap, ht)
+        dance_scheme = Movements('twerk')
+        dance_all_legs = [
+            [[ 0.06,-0.05,-0.07],[ 0.06,-0.05,-0.07]],
+            [[ 0.06, 0.05,-0.07],[ 0.06, 0.05,-0.07]],
             [[-0.06,-0.05,-0.07-modified_ht],[-0.06,-0.05,-0.07-modified_ht]],
             [[-0.06, 0.05,-0.07-modified_ht],[-0.06, 0.05,-0.07-modified_ht]]
         ]
@@ -492,6 +590,8 @@ class MovementGroups:
         dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
         self.MovementLib.append(dance_scheme)      # append dance
         return self.MovementLib
+
+     
     
     def rotate(self,angle = 1):
         """ This movement enables the pupper to rotate around its body center in the x-y plane.
