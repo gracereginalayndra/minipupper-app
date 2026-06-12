@@ -142,7 +142,7 @@ def _set_music_active(active: bool):
         except OSError:
             pass
         
-def _set_volume(pct: str = "85%"):
+def _set_volume(pct: str = "70%"):
     """Set speaker volume via shared audio_util (auto-detects card)."""
     try:
         sys.path.insert(0, "/home/ubuntu/minipupper-app")
@@ -396,7 +396,7 @@ def _choreography_loop(build_movement, run_movement,
         pass
 
     # Set volume
-    _set_volume("85%")
+    _set_volume("70%")
     _set_music_active(True)
 
     # Start audio playback
@@ -413,7 +413,7 @@ def _choreography_loop(build_movement, run_movement,
         )
     player = subprocess.Popen(
         ["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet",
-         "-af", "volume=0.85", wav_file],
+         "-af", "volume=0.70", wav_file],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         start_new_session=True,
     )
@@ -427,20 +427,15 @@ def _choreography_loop(build_movement, run_movement,
     sorted_moves = sorted(timed_choreography, key=lambda m: m[3])
     max_moves = len(sorted_moves)
 
-    # Head pose lookup for gap-filling (holds last pose instead of resetting)
-    # Per-move execution: sleep_until each beat, execute one move, repeat.
-    # No window batching — each move fires exactly on its beat timestamp,
-    # with natural idle in between. Gaps expand/contract with BPM changes.
-
-    audio_start = time.time() + 0.5  # lead-in
-    moves_done = 0
-    last_state = None  # tracks where servos are for snap-free transitions
+    # ── One-shot: build full MovementLib then execute ──
+    full_lib = []
+    moves_built = 0
 
     for i, move in enumerate(sorted_moves):
         cmd, time_acc, angle, start_time = move
         
         if not os.path.exists(DANCE_ACTIVE_FLAG):
-            _log("Dance stopped - abort.")
+            _log("Dance stopped during build - abort.")
             break
 
         # Stop when audio finishes playing
@@ -448,38 +443,70 @@ def _choreography_loop(build_movement, run_movement,
             _log(f"Audio ended at {start_time:.1f}s — stopping dance.")
             break
 
-        # Wall-clock sync: wait for this exact beat time
-        target = audio_start + start_time
-        now = time.time()
-        sleep_time = target - now
-        if sleep_time > 0:
-            time.sleep(sleep_time)
-
-        # HF Space already computes BPM-aware time_acc — use it directly.
-        # hold fills the remaining gap between beats.
+        # HF Space baked timing: hold fills gap between consecutive moves
         gap = sorted_moves[i + 1][3] - start_time if i + 1 < len(sorted_moves) else time_acc + 0.5
         hold = max(gap - time_acc, 0.1)
 
-        # Build and execute this single move
         try:
             lib = build_movement(cmd, hold, angle, time_acc)
             if lib:
-                ok, last_state = run_movement(lib, timeout=hold + time_acc + 0.5,
-                                                  initial_state=last_state)
-                moves_done += 1
-                if moves_done % 20 == 0:
-                    _log(f"[{moves_done}/{max_moves}] {start_time:.1f}s")
+                full_lib.extend(lib)
+                moves_built += 1
         except Exception as e:
-            _log(f"Move error ({cmd}): {e}")
+            _log(f"Move build error ({cmd}): {e}")
 
-    _log(f"Dance finished: {moves_done}/{max_moves} moves executed")
+    if not full_lib:
+        _log("No moves built — skipping execution")
+        return {
+            "ok": False,
+            "error": "No moves were built",
+        }
+
+    # Get audio duration for timeout calculation
+    audio_duration = 0.0
+    try:
+        result = subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "csv=p=0", wav_file],
+            capture_output=True, text=True, timeout=5
+        )
+        audio_duration = float(result.stdout.strip())
+    except Exception:
+        if sorted_moves:
+            last = sorted_moves[-1]
+            audio_duration = last[3] + last[1] + 1.0
+        else:
+            audio_duration = 30.0
+
+    timeout = audio_duration + 10.0
+    _log(f"One-shot: {moves_built} moves → {len(full_lib)} Movement objects, "
+         f"audio={audio_duration:.0f}s, timeout={timeout:.0f}s")
+
+    # Progress callback for periodic logging
+    _log("Registering progress callback...")
+    def _progress(move_idx, total, elapsed):
+        pct_moves = move_idx / total * 100 if total > 0 else 0
+        pct_time = elapsed / timeout * 100
+        diff = pct_moves - pct_time
+        _log(f"[{move_idx}/{total}] {elapsed:.1f}s — moves {pct_moves:.0f}% vs time {pct_time:.0f}% ({diff:+.0f}%)")
+
+    # Execute all moves in a single run_movement call
+    ok, last_state = run_movement(
+        full_lib,
+        timeout=timeout,
+        initial_state=None,
+        stop_flag_path=DANCE_ACTIVE_FLAG,
+        progress_callback=_progress,
+    )
+
+    _log(f"Dance {'completed' if ok else 'stopped'} ({moves_built} moves)")
 
     return {
-        "ok": True,
-        "message": f"Danced to '{title}' - {moves_done} moves at {bpm} BPM ({genre_display})",
+        "ok": ok,
+        "message": f"Danced to '{title}' - {moves_built} moves at {bpm} BPM ({genre_display})",
         "title": title,
         "bpm": bpm,
-        "moves_executed": moves_done,
+        "moves_executed": moves_built,
         "genre": genre,
         "genre_display": genre_display,
         "source": "hf_space",

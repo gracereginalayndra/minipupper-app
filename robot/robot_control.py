@@ -27,6 +27,7 @@ Usage:
   python3 robot/robot_control.py greet               # wave a leg
 """
 
+import os
 import sys
 import time
 import argparse
@@ -466,7 +467,8 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
 #  Execution Engine
 # ═══════════════════════════════════════════════════════════════════
 
-def run_movement(movement_lib, timeout=30.0, initial_state=None):
+def run_movement(movement_lib, timeout=30.0, initial_state=None,
+             stop_flag_path=None, progress_callback=None):
     """
     Execute a MovementLib directly on the robot hardware.
 
@@ -482,7 +484,7 @@ def run_movement(movement_lib, timeout=30.0, initial_state=None):
                        back to standing between moves.
 
     Returns:
-        (True, state_dict) on success, (False, state_dict) on timeout/error
+        (True, state_dict) on success, (False, state_dict) on timeout/error/stop
         state_dict has keys: legs_location, speed, attitude, turn
     """
     movement_ctl = MovementScheme(movement_lib)
@@ -516,10 +518,12 @@ def run_movement(movement_lib, timeout=30.0, initial_state=None):
     last_loop = time.time()
     start_time = time.time()
 
-    # Estimate duration from movement params + 3s safety margin
-    est_duration = max(15.0, lib_length * 0.5 + 5.0)
-
-    hard_timeout = min(timeout, max(est_duration, 8.0))
+    # Estimate duration — use timeout as floor, lib estimate as ceiling
+    est_duration = max(timeout, lib_length * 0.2 + 3.0)
+    hard_timeout = est_duration + 5.0
+    last_flag_check = 0
+    last_progress_call = 0
+    stopped_by_flag = False
 
     while True:
         now = time.time()
@@ -559,6 +563,19 @@ def run_movement(movement_lib, timeout=30.0, initial_state=None):
         # Send joint angles to servos via ESP32
         _hardware.set_actuator_postions(_state.joint_angles)
 
+        # Check stop flag periodically (every ~1.5s elapsed)
+        if stop_flag_path and elapsed - last_flag_check >= 1.5:
+            last_flag_check = elapsed
+            if not os.path.exists(stop_flag_path):
+                print("Dance stopped via flag", file=sys.stderr)
+                stopped_by_flag = True
+                break
+
+        # Call progress callback periodically (every ~3s elapsed)
+        if progress_callback and elapsed - last_progress_call >= 3.0:
+            last_progress_call = elapsed
+            progress_callback(movement_ctl.movement_now_number, lib_length, elapsed)
+
         # Check if all movements played (tick logic) OR time-based fallback
         scheme_done = (movement_ctl.movement_now_number >= lib_length - 1
                        and movement_ctl.tick >= movement_ctl.now_ticks)
@@ -567,7 +584,8 @@ def run_movement(movement_lib, timeout=30.0, initial_state=None):
         if scheme_done or time_done:
             break
 
-    return True, {
+    ok = not stopped_by_flag
+    return ok, {
         'legs_location': list(list(x) for x in movement_ctl.legs_location_now),
         'speed': list(movement_ctl.speed_now),
         'attitude': list(movement_ctl.attitude_now),

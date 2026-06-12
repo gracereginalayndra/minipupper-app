@@ -22,136 +22,164 @@ import random
 # ═══════════════════════════════════════════════════════════════════
 
 GENRE_POOLS = {
+    # ═══════════════════════════════════════════════════════════════
+    #  Redistributed weights (2026-06-12)
+    #  Goal: every move gets ≥4-5% chance. Top moves still define
+    #  the genre vibe but no longer dominate (>16% max).
+    #  Tail moves raised to ~4-6% so they actually appear in dances.
+    # ═══════════════════════════════════════════════════════════════
     "rock": {
+        # Vibe: aggressive headbanging, swagger, rear energy
+        # Signature: headbang (still #1), sig:rock (windmill head)
         "moves": [
-            "headbang", "sig:rock", "bounce", "swagger", "dip", 
-            "lean", "body_row", "backleg_lift", "twerk", "wiggle",
-            "butt_shrug",
+            "headbang", "sig:rock", "butt_shrug", "swagger", "dip",
+            "bounce", "lean", "body_row", "backleg_lift", "twerk",
+            "wiggle",
         ],
         "weights": [
-            0.25, 0.2, 0.02, 0.1, 0.04, 
-            0.03, 0.02, 0.03, 0.01, 0.01,
-            0.2,
+            0.16, 0.14, 0.12, 0.10, 0.08,
+            0.08, 0.07, 0.07, 0.07, 0.06,
+            0.05,
         ],
     },
     "classical": {
+        # Vibe: graceful bowing, elegant swagger, ballet-like leg lifts
+        # Signature: greet (bow), swagger (graceful sway)
         "moves": [
-            "greet", "bounce", "swagger", "dip", "nod",
-            "lean", "look_up", "look_down", "body_row", "backleg_lift",
+            "greet", "swagger", "backleg_lift", "dip", "nod",
+            "lean", "look_up", "look_down", "body_row", "bounce",
             "butt_shrug",
         ],
         "weights": [
-            0.25, 0.01, 0.2, 0.15, 0.1,
-            0.07, 0.06, 0.05, 0.05, 0.15,
-            0.02,
+            0.16, 0.14, 0.12, 0.10, 0.09,
+            0.08, 0.08, 0.07, 0.07, 0.05,
+            0.04,
         ],
     },
     "pop": {
+        # Vibe: energetic, varied, body waves, twerks, sassy
+        # Signature: sig:pop (body wave), twerk, wiggle
         "moves": [
-            "sig:pop", "disco1", "bounce", "swagger", "dip",
-            "nod", "lean", "look_up", "look_down", "body_row",
-            "backleg_lift", "twerk", "wiggle", "butt_shrug",
+            "sig:pop", "twerk", "wiggle", "bounce", "backleg_lift",
+            "nod", "lean", "disco1", "swagger", "butt_shrug",
+            "dip", "look_up", "look_down", "body_row",
         ],
         "weights": [
-            0.2, 0.1, 0.15, 0.05, 0.04,
-            0.12, 0.13, 0.02, 0.02, 0.02,
-            0.14, 0.18, 0.17, 0.08,
+            0.10, 0.10, 0.09, 0.12, 0.08,
+            0.08, 0.08, 0.08, 0.06, 0.06,
+            0.05, 0.04, 0.03, 0.03,
         ],
     },
     "disco": {
+        # Vibe: groovy shoulder shrugs, bouncy, funky body rolls
+        # Signature: shoulder_shrug (the John Travolta move)
         "moves": [
-            "shoulder_shrug", "bounce", "swagger", "dip", "nod",
-            "lean", "look_up", "look_down", "body_row", "backleg_lift",
-            "twerk", "wiggle", "butt_shrug",
+            "shoulder_shrug", "bounce", "swagger", "backleg_lift",
+            "body_row", "twerk", "wiggle", "lean", "dip",
+            "look_up", "butt_shrug", "look_down", "nod",
         ],
         "weights": [
-            0.21, 0.18, 0.16, 0.05, 0.02,
-            0.12, 0.11, 0.08, 0.14, 0.15,
-            0.13, 0.1, 0.08,
+            0.14, 0.11, 0.10, 0.09,
+            0.09, 0.08, 0.08, 0.07, 0.06,
+            0.06, 0.05, 0.04, 0.03,
         ],
     },
     "hiphop": {
+        # Vibe: bouncy head moves, assertive twerks, swagger
+        # Signature: disco2 (assertive head pattern), twerk, wiggle
         "moves": [
-            "disco2", "bounce", "swagger", "dip", "nod",
-            "backleg_lift", "twerk", "wiggle", "butt_shrug", "lean",
+            "disco2", "twerk", "wiggle", "butt_shrug", "swagger",
+            "bounce", "dip", "backleg_lift", "lean", "nod",
             "look_up", "look_down", "body_row",
         ],
         "weights": [
-            0.25, 0.15, 0.18, 0.15, 0.03,
-            0.10, 0.15, 0.18, 0.15, 0.03,
-            0.02, 0.02, 0.02,
+            0.13, 0.10, 0.10, 0.09, 0.09,
+            0.08, 0.08, 0.07, 0.06, 0.05,
+            0.05, 0.05, 0.05,
         ],
     },
     "electronic": {
+        # Vibe: fast rhythmic head patterns, body rolls, repetitive
+        # Signature: disco3 (rapid quadrant scan), body_row, backleg_lift
         "moves": [
-            "disco3", "bounce", "swagger", "dip", "nod",
-            "lean", "look_up", "look_down", "body_row", "backleg_lift",
-            "twerk", "wiggle", "butt_shrug",
+            "disco3", "body_row", "backleg_lift", "look_down",
+            "look_up", "bounce", "lean", "twerk", "wiggle",
+            "dip", "butt_shrug", "swagger", "nod",
         ],
         "weights": [
-            0.22, 0.08, 0.02, 0.03, 0.04,
-            0.03, 0.1, 0.13, 0.15, 0.18,
-            0.02, 0.03, 0.05,
+            0.13, 0.10, 0.10, 0.09,
+            0.08, 0.08, 0.07, 0.07, 0.07,
+            0.06, 0.05, 0.05, 0.05,
         ],
     },
     "jazz": {
+        # Vibe: smooth squats, cool nods, relaxed leans
+        # Signature: squat (jazz crouch), nod (cool jazz nod)
         "moves": [
-            "squat", "bounce", "swagger", "dip", "nod",
-            "lean", "look_up", "look_down", "body_row", "backleg_lift",
-            "twerk", "wiggle", "butt_shrug",
+            "squat", "nod", "lean", "backleg_lift", "butt_shrug",
+            "swagger", "dip", "body_row", "bounce", "look_up",
+            "look_down", "twerk", "wiggle",
         ],
         "weights": [
-            0.23, 0.05, 0.12, 0.10, 0.16,
-            0.18, 0.05, 0.03, 0.12, 0.14,
-            0.1, 0.01, 0.11,
+            0.14, 0.10, 0.10, 0.09, 0.08,
+            0.08, 0.08, 0.07, 0.06, 0.05,
+            0.05, 0.05, 0.05,
         ],
     },
     "latin": {
+        # Vibe: hip wiggles, rear action, passionate kicks
+        # Signature: front_kick (rearing kick), wiggle, butt_shrug
         "moves": [
-            "front_kick", "bounce", "swagger", "dip", "nod",
-            "lean", "look_up", "look_down", "body_row", "backleg_lift",
-            "twerk", "wiggle", "butt_shrug",
+            "front_kick", "wiggle", "butt_shrug", "twerk",
+            "backleg_lift", "body_row", "look_down", "bounce",
+            "dip", "swagger", "lean", "look_up", "nod",
         ],
         "weights": [
-            0.12, 0.10, 0.06, 0.03, 0.03,
-            0.02, 0.02, 0.11, 0.11, 0.12,
-            0.15, 0.18, 0.18, 
+            0.13, 0.11, 0.10, 0.09,
+            0.08, 0.08, 0.07, 0.07,
+            0.06, 0.06, 0.05, 0.05, 0.05,
         ],
     },
     "reggae": {
-        "moves": [            
-            "raise-body", "bounce", "swagger", "dip", "nod",
-            "lean", "look_up", "look_down", "body_row", "backleg_lift",
-            "twerk", "wiggle", "butt_shrug",
+        # Vibe: laid-back elevation, chill nods, gentle rocks
+        # Signature: raise-body (elevated chill), nod, bounce
+        "moves": [
+            "raise-body", "nod", "bounce", "body_row", "dip",
+            "swagger", "backleg_lift", "wiggle", "butt_shrug",
+            "lean", "look_up", "look_down", "twerk",
         ],
         "weights": [
-            0.20, 0.15, 0.12, 0.10, 0.15,
-            0.05, 0.04, 0.04, 0.13, 0.05,
-            0.06, 0.07, 0.08,
+            0.14, 0.10, 0.10, 0.09, 0.08,
+            0.08, 0.07, 0.07, 0.06,
+            0.06, 0.05, 0.05, 0.05,
         ],
     },
     "country": {
+        # Vibe: bouncy squats, cheerful dips, look up to the sky
+        # Signature: lower_body (squat), dip, bounce
         "moves": [
-            "lower_body", "bounce", "swagger", "dip", "nod",
-            "lean", "look_up", "look_down", "body_row", "backleg_lift",
+            "lower_body", "dip", "bounce", "look_up", "body_row",
+            "backleg_lift", "swagger", "look_down", "lean", "nod",
             "twerk", "wiggle", "butt_shrug",
         ],
         "weights": [
-            0.23, 0.12, 0.08, 0.16, 0.04,
-            0.04, 0.12, 0.1, 0.12, 0.09,
-            0.02, 0.03, 0.01,
+            0.14, 0.10, 0.10, 0.09, 0.08,
+            0.08, 0.07, 0.07, 0.06, 0.06,
+            0.05, 0.05, 0.05,
         ],
     },
     "folk": {
+        # Vibe: organic scanning, gentle bounces, earthy nods
+        # Signature: seek (looking around at nature), bounce, nod
         "moves": [
-            "seek", "bounce", "swagger", "dip", "nod",
-            "lean", "look_up", "look_down", "body_row", "backleg_lift",
+            "seek", "bounce", "nod", "look_up", "look_down",
+            "body_row", "swagger", "dip", "lean", "backleg_lift",
             "twerk", "wiggle", "butt_shrug",
         ],
         "weights": [
-            0.23, 0.12, 0.08, 0.16, 0.04,
-            0.04, 0.12, 0.1, 0.12, 0.09,
-            0.02, 0.03, 0.01,
+            0.14, 0.10, 0.10, 0.09, 0.08,
+            0.08, 0.07, 0.07, 0.06, 0.06,
+            0.05, 0.05, 0.05,
         ],
     },
 }
