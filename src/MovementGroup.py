@@ -83,10 +83,30 @@ class MovementGroups:
         if time <=0:
             time = self.dt
         interval = int(time / self.dt)
-        dance_scheme = Movements('stop')
+        dance_scheme = Movements('stop_butt_shrug')
         dance_all_legs = self.default_stand
         dance_speed = [[0,0,0],[0,0,0]]        # speed_x, speed_y, no_use
         dance_attitude = [[0,-25,0]]     # roll, pitch, yaw degree
+        dance_scheme.setInterpolationNumber(interval)
+        dance_scheme.setTransitionTic(70)
+        dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
+        self.MovementLib.append(dance_scheme)      # append dance
+        return self.MovementLib
+
+    def stop_butt_shrug(self, time = 1):
+        """Return to the default natural standing position
+        Args:
+            time: let the robot be still in the defaut state for a certain period (unit: second)
+        Returns:
+        	Append the default standing position into MovementLib
+        """
+        if time <=0:
+            time = self.dt
+        interval = int(time / self.dt)
+        dance_scheme = Movements('stop_wiggle')
+        dance_all_legs = self.default_stand
+        dance_speed = [[0,0,0],[0,0,0]]        # speed_x, speed_y, no_use
+        dance_attitude = [[0,25,0]]     # roll, pitch, yaw degree
         dance_scheme.setInterpolationNumber(interval)
         dance_scheme.setTransitionTic(70)
         dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
