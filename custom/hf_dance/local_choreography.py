@@ -24,110 +24,134 @@ import random
 GENRE_POOLS = {
     "rock": {
         "moves": [
-            "headbang", "bounce", "swagger", "dip", "lean", "front_kick", "look-up", "body-row",
-            "nod", "raise-body", "sig:rock",
+            "headbang", "sig:rock", "bounce", "swagger", "dip", 
+            "lean", "body_row", "backleg_lift", "twerk", "wiggle",
+            "butt_shrug",
         ],
         "weights": [
-            0.25, 0.12, 0.10, 0.05, 0.04, 0.03, 0.02, 0.02,
-            0.01, 0.01, 0.2,
+            0.25, 0.2, 0.02, 0.1, 0.04, 
+            0.03, 0.02, 0.03, 0.01, 0.01,
+            0.2,
         ],
     },
     "classical": {
         "moves": [
-            "nod", "lean", "dip", "swagger", "look-up", "look-down", "body-row", "raise-body",
-            "lower-body", "greet", "bounce", "headbang", "look-right", "look-left",
+            "greet", "bounce", "swagger", "dip", "nod",
+            "lean", "look_up", "look_down", "body_row", "backleg_lift",
+            "butt_shrug",
         ],
         "weights": [
-            0.15, 0.15, 0.12, 0.10, 0.06, 0.06, 0.06, 0.05,
-            0.05, 0.02, 0.02, 0.01, 0.01, 0.01,
+            0.25, 0.01, 0.2, 0.15, 0.1,
+            0.07, 0.06, 0.05, 0.05, 0.15,
+            0.02,
         ],
     },
     "pop": {
         "moves": [
-            "bounce", "swagger", "dip", "headbang", "lean", "greet", "nod", "look-up",
-            "body-row", "squat", "sig:pop",
+            "sig:pop", "disco1", "bounce", "swagger", "dip",
+            "nod", "lean", "look_up", "look_down", "body_row",
+            "backleg_lift", "twerk", "wiggle", "butt_shrug",
         ],
         "weights": [
-            0.05, 0.10, 0.15, 0.05, 0.04, 0.03, 0.03, 0.02,
-            0.02, 0.02, 0.2,
+            0.2, 0.1, 0.15, 0.05, 0.04,
+            0.12, 0.13, 0.02, 0.02, 0.02,
+            0.14, 0.18, 0.17, 0.08,
         ],
     },
     "disco": {
         "moves": [
-            "swagger", "dip", "bounce", "lean", "body-row", "nod", "greet", "raise-body",
-            "lower-body", "look-up",
+            "shoulder_shrug", "bounce", "swagger", "dip", "nod",
+            "lean", "look_up", "look_down", "body_row", "backleg_lift",
+            "twerk", "wiggle", "butt_shrug",
         ],
         "weights": [
-            0.12, 0.08, 0.06, 0.05, 0.02, 0.02, 0.02, 0.01,
-            0.01, 0.01,
+            0.21, 0.18, 0.16, 0.05, 0.02,
+            0.12, 0.11, 0.08, 0.14, 0.15,
+            0.13, 0.1, 0.08,
         ],
     },
     "hiphop": {
         "moves": [
-            "bounce", "swagger", "headbang", "dip", "front_kick", "lean", "nod", "body-row",
+            "disco2", "bounce", "swagger", "dip", "nod",
+            "backleg_lift", "twerk", "wiggle", "butt_shrug", "lean",
+            "look_up", "look_down", "body_row",
         ],
         "weights": [
-            0.20, 0.15, 0.08, 0.05, 0.03, 0.02, 0.02, 0.02,
+            0.25, 0.15, 0.18, 0.15, 0.03,
+            0.10, 0.15, 0.18, 0.15, 0.03,
+            0.02, 0.02, 0.02,
         ],
     },
     "electronic": {
         "moves": [
-            "headbang", "bounce", "swagger", "dip", "nod", "lean", "body-row", "front_kick",
-            "look-up", "greet",
+            "disco3", "bounce", "swagger", "dip", "nod",
+            "lean", "look_up", "look_down", "body_row", "backleg_lift",
+            "twerk", "wiggle", "butt_shrug",
         ],
         "weights": [
-            0.22, 0.18, 0.08, 0.06, 0.04, 0.03, 0.02, 0.01,
-            0.01, 0.01,
+            0.22, 0.08, 0.02, 0.03, 0.04,
+            0.03, 0.1, 0.13, 0.15, 0.18,
+            0.02, 0.03, 0.05,
         ],
     },
     "jazz": {
         "moves": [
-            "swagger", "lean", "nod", "dip", "look-up", "look-down", "body-row", "bounce",
-            "greet", "raise-body", "lower-body", "look-right", "look-left",
+            "squat", "bounce", "swagger", "dip", "nod",
+            "lean", "look_up", "look_down", "body_row", "backleg_lift",
+            "twerk", "wiggle", "butt_shrug",
         ],
         "weights": [
-            0.18, 0.15, 0.12, 0.10, 0.06, 0.06, 0.05, 0.03,
-            0.02, 0.02, 0.02, 0.01, 0.01,
+            0.23, 0.05, 0.12, 0.10, 0.16,
+            0.18, 0.05, 0.03, 0.12, 0.14,
+            0.1, 0.01, 0.11,
         ],
     },
     "latin": {
         "moves": [
-            "swagger", "bounce", "dip", "lean", "headbang", "nod", "greet", "front_kick",
-            "body-row", "look-up",
+            "front_kick", "bounce", "swagger", "dip", "nod",
+            "lean", "look_up", "look_down", "body_row", "backleg_lift",
+            "twerk", "wiggle", "butt_shrug",
         ],
         "weights": [
-            0.12, 0.10, 0.06, 0.03, 0.03, 0.02, 0.02, 0.01,
-            0.01, 0.01,
+            0.12, 0.10, 0.06, 0.03, 0.03,
+            0.02, 0.02, 0.11, 0.11, 0.12,
+            0.15, 0.18, 0.18, 
         ],
     },
     "reggae": {
-        "moves": [
-            "swagger", "nod", "lean", "bounce", "dip", "body-row", "look-up", "look-down",
-            "raise-body", "lower-body", "greet", "headbang",
+        "moves": [            
+            "raise-body", "bounce", "swagger", "dip", "nod",
+            "lean", "look_up", "look_down", "body_row", "backleg_lift",
+            "twerk", "wiggle", "butt_shrug",
         ],
         "weights": [
-            0.20, 0.15, 0.12, 0.10, 0.05, 0.05, 0.04, 0.04,
-            0.03, 0.03, 0.02, 0.01,
+            0.20, 0.15, 0.12, 0.10, 0.15,
+            0.05, 0.04, 0.04, 0.13, 0.05,
+            0.06, 0.07, 0.08,
         ],
     },
     "country": {
         "moves": [
-            "bounce", "nod", "swagger", "dip", "greet", "lean", "look-up", "look-down",
-            "headbang", "raise-body",
+            "lower_body", "bounce", "swagger", "dip", "nod",
+            "lean", "look_up", "look_down", "body_row", "backleg_lift",
+            "twerk", "wiggle", "butt_shrug",
         ],
         "weights": [
-            0.18, 0.12, 0.08, 0.06, 0.04, 0.04, 0.02, 0.02,
-            0.02, 0.01,
+            0.23, 0.12, 0.08, 0.16, 0.04,
+            0.04, 0.12, 0.1, 0.12, 0.09,
+            0.02, 0.03, 0.01,
         ],
     },
     "folk": {
         "moves": [
-            "nod", "lean", "swagger", "bounce", "dip", "greet", "look-up", "look-down",
-            "body-row", "raise-body", "lower-body", "headbang",
+            "seek", "bounce", "swagger", "dip", "nod",
+            "lean", "look_up", "look_down", "body_row", "backleg_lift",
+            "twerk", "wiggle", "butt_shrug",
         ],
         "weights": [
-            0.18, 0.15, 0.12, 0.08, 0.07, 0.04, 0.04, 0.03,
-            0.03, 0.02, 0.02, 0.01,
+            0.23, 0.12, 0.08, 0.16, 0.04,
+            0.04, 0.12, 0.1, 0.12, 0.09,
+            0.02, 0.03, 0.01,
         ],
     },
 }
