@@ -47,13 +47,12 @@ GENRE_POOLS = {
         # Signature: greet (bow), swagger (graceful sway)
         "moves": [
             "greet", "swagger", "backleg_lift", "dip", "nod",
-            "lean", "look_up", "look_down", "body_row", "bounce",
+            "look_up", "look_down", "body_row", "bounce",
             "butt_shrug",
         ],
         "weights": [
             0.16, 0.14, 0.12, 0.10, 0.09,
-            0.08, 0.08, 0.07, 0.07, 0.05,
-            0.04,
+            0.08, 0.10, 0.07, 0.07, 0.07,            
         ],
     },
     "pop": {
@@ -75,13 +74,13 @@ GENRE_POOLS = {
         # Signature: shoulder_shrug (the John Travolta move)
         "moves": [
             "shoulder_shrug", "bounce", "swagger", "backleg_lift",
-            "body_row", "twerk", "wiggle", "lean", "dip",
+            "body_row", "twerk", "wiggle", "dip",
             "look_up", "butt_shrug", "look_down", "nod",
         ],
         "weights": [
             0.14, 0.11, 0.10, 0.09,
             0.09, 0.08, 0.08, 0.07, 0.06,
-            0.06, 0.05, 0.04, 0.03,
+            0.06, 0.06, 0.05,
         ],
     },
     "hiphop": {
@@ -89,13 +88,13 @@ GENRE_POOLS = {
         # Signature: disco2 (assertive head pattern), twerk, wiggle
         "moves": [
             "disco2", "twerk", "wiggle", "butt_shrug", "swagger",
-            "bounce", "dip", "backleg_lift", "lean", "nod",
+            "bounce", "dip", "backleg_lift", "nod",
             "look_up", "look_down", "body_row",
         ],
         "weights": [
             0.13, 0.10, 0.10, 0.09, 0.09,
-            0.08, 0.08, 0.07, 0.06, 0.05,
-            0.05, 0.05, 0.05,
+            0.08, 0.08, 0.07, 0.06, 0.07,
+            0.05, 0.08,
         ],
     },
     "electronic": {
@@ -103,27 +102,27 @@ GENRE_POOLS = {
         # Signature: disco3 (rapid quadrant scan), body_row, backleg_lift
         "moves": [
             "disco3", "body_row", "backleg_lift", "look_down",
-            "look_up", "bounce", "lean", "twerk", "wiggle",
+            "look_up", "bounce", "twerk", "wiggle",
             "dip", "butt_shrug", "swagger", "nod",
         ],
         "weights": [
             0.13, 0.10, 0.10, 0.09,
-            0.08, 0.08, 0.07, 0.07, 0.07,
-            0.06, 0.05, 0.05, 0.05,
+            0.08, 0.08, 0.09, 0.08, 0.07,
+            0.06, 0.05, 0.07,
         ],
     },
     "jazz": {
         # Vibe: smooth squats, cool nods, relaxed leans
         # Signature: squat (jazz crouch), nod (cool jazz nod)
         "moves": [
-            "squat", "nod", "lean", "backleg_lift", "butt_shrug",
+            "squat", "nod", "backleg_lift", "butt_shrug",
             "swagger", "dip", "body_row", "bounce", "look_up",
             "look_down", "twerk", "wiggle",
         ],
         "weights": [
             0.14, 0.10, 0.10, 0.09, 0.08,
-            0.08, 0.08, 0.07, 0.06, 0.05,
-            0.05, 0.05, 0.05,
+            0.08, 0.08, 0.07, 0.08,
+            0.06, 0.07, 0.05,
         ],
     },
     "latin": {
@@ -132,12 +131,12 @@ GENRE_POOLS = {
         "moves": [
             "front_kick", "wiggle", "butt_shrug", "twerk",
             "backleg_lift", "body_row", "look_down", "bounce",
-            "dip", "swagger", "lean", "look_up", "nod",
+            "dip", "swagger", "look_up", "nod",
         ],
         "weights": [
             0.13, 0.11, 0.10, 0.09,
-            0.08, 0.08, 0.07, 0.07,
-            0.06, 0.06, 0.05, 0.05, 0.05,
+            0.08, 0.08, 0.10, 0.10,
+            0.06, 0.06, 0.05, 0.05,
         ],
     },
     "reggae": {
@@ -146,12 +145,12 @@ GENRE_POOLS = {
         "moves": [
             "raise-body", "nod", "bounce", "body_row", "dip",
             "swagger", "backleg_lift", "wiggle", "butt_shrug",
-            "lean", "look_up", "look_down", "twerk",
+            "look_up", "look_down", "twerk",
         ],
         "weights": [
-            0.14, 0.10, 0.10, 0.09, 0.08,
-            0.08, 0.07, 0.07, 0.06,
-            0.06, 0.05, 0.05, 0.05,
+            0.14, 0.10, 0.10, 0.09, 0.10,
+            0.08, 0.07, 0.07, 0.09,
+            0.06, 0.05, 0.05,
         ],
     },
     "country": {
@@ -159,13 +158,13 @@ GENRE_POOLS = {
         # Signature: lower_body (squat), dip, bounce
         "moves": [
             "lower_body", "dip", "bounce", "look_up", "body_row",
-            "backleg_lift", "swagger", "look_down", "lean", "nod",
+            "backleg_lift", "swagger", "look_down", "nod",
             "twerk", "wiggle", "butt_shrug",
         ],
         "weights": [
-            0.14, 0.10, 0.10, 0.09, 0.08,
-            0.08, 0.07, 0.07, 0.06, 0.06,
-            0.05, 0.05, 0.05,
+            0.14, 0.10, 0.10, 0.09, 0.10,
+            0.08, 0.07, 0.10, 0.06, 0.06,
+            0.05, 0.05,
         ],
     },
     "folk": {
@@ -173,13 +172,13 @@ GENRE_POOLS = {
         # Signature: seek (looking around at nature), bounce, nod
         "moves": [
             "seek", "bounce", "nod", "look_up", "look_down",
-            "body_row", "swagger", "dip", "lean", "backleg_lift",
+            "body_row", "swagger", "dip", "backleg_lift",
             "twerk", "wiggle", "butt_shrug",
         ],
         "weights": [
-            0.14, 0.10, 0.10, 0.09, 0.08,
-            0.08, 0.07, 0.07, 0.06, 0.06,
-            0.05, 0.05, 0.05,
+            0.14, 0.10, 0.10, 0.09, 0.10,
+            0.08, 0.07, 0.10, 0.06, 0.06,
+            0.05, 0.05, 
         ],
     },
 }
