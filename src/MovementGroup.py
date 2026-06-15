@@ -65,10 +65,12 @@ class MovementGroups:
         interval = int(time / self.dt)
         dance_scheme = Movements('stop')
         dance_all_legs = self.default_stand
-        dance_speed = [[0,0,0],[0,0,0]]        # speed_x, speed_y, no_use
+        dance_speed = [[0,0,0]]        # speed_x, speed_y, no_use
         dance_attitude = [[0,0,0]]     # roll, pitch, yaw degree
         dance_scheme.setInterpolationNumber(interval)
-        dance_scheme.setTransitionTic(70)
+        # Use stop duration for Entry phase instead of hardcoded 70 ticks (1.05s)
+        _stop_tic = max(interval, 1)
+        dance_scheme.setTransitionTic(_stop_tic)
         dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
         self.MovementLib.append(dance_scheme)      # append dance
         return self.MovementLib
@@ -85,10 +87,12 @@ class MovementGroups:
         interval = int(time / self.dt)
         dance_scheme = Movements('stop_butt_shrug')
         dance_all_legs = self.default_stand
-        dance_speed = [[0,0,0],[0,0,0]]        # speed_x, speed_y, no_use
+        dance_speed = [[0,0,0]]        # speed_x, speed_y, no_use
         dance_attitude = [[0,-25,0]]     # roll, pitch, yaw degree
         dance_scheme.setInterpolationNumber(interval)
-        dance_scheme.setTransitionTic(70)
+        # Use stop duration for Entry phase instead of hardcoded 70 ticks (1.05s)
+        _stop_tic = max(interval, 1)
+        dance_scheme.setTransitionTic(_stop_tic)
         dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
         self.MovementLib.append(dance_scheme)      # append dance
         return self.MovementLib
@@ -105,10 +109,12 @@ class MovementGroups:
         interval = int(time / self.dt)
         dance_scheme = Movements('stop_wiggle')
         dance_all_legs = self.default_stand
-        dance_speed = [[0,0,0],[0,0,0]]        # speed_x, speed_y, no_use
+        dance_speed = [[0,0,0]]        # speed_x, speed_y, no_use
         dance_attitude = [[0,25,0]]     # roll, pitch, yaw degree
         dance_scheme.setInterpolationNumber(interval)
-        dance_scheme.setTransitionTic(70)
+        # Use stop duration for Entry phase instead of hardcoded 70 ticks (1.05s)
+        _stop_tic = max(interval, 1)
+        dance_scheme.setTransitionTic(_stop_tic)
         dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
         self.MovementLib.append(dance_scheme)      # append dance
         return self.MovementLib
@@ -364,7 +370,7 @@ class MovementGroups:
         dance_scheme = Movements('head_move')
         dance_all_legs = self.default_stand
         dance_speed = [[0,0,0]]        # speed_x, speed_y, no_use
-        dance_attitude = [[0,pitch_deg,yaw_deg],[0,pitch_deg,yaw_deg]]     # roll, pitch, yaw degree
+        dance_attitude = [[0,pitch_deg,yaw_deg]]     # roll, pitch, yaw degree
         dance_scheme.setInterpolationNumber(interval_uni)
         dance_scheme.setTransitionTic(interval_acc)
         dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
@@ -395,7 +401,7 @@ class MovementGroups:
     #     dance_scheme = Movements('wiggle')
     #     dance_all_legs = self.default_stand
     #     dance_speed = [[0,0,0]]        # speed_x, speed_y, no_use
-    #     dance_attitude = [[0,pitch_deg,yaw_deg],[0,pitch_deg,yaw_deg]]     # roll, pitch, yaw degree
+    #     dance_attitude = [[0,pitch_deg,yaw_deg]]     # roll, pitch, yaw degree
     #     dance_scheme.setInterpolationNumber(interval_uni)
     #     dance_scheme.setTransitionTic(interval_acc)
     #     dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
@@ -424,7 +430,7 @@ class MovementGroups:
         dance_scheme = Movements('body_row')
         dance_all_legs = self.default_stand
         dance_speed = [[0,0,0]]        # speed_x, speed_y, no_use
-        dance_attitude = [[modified_row,0,0],[modified_row,0,0]]     # roll, pitch, yaw degree
+        dance_attitude = [[modified_row,0,0]]     # roll, pitch, yaw degree
         dance_scheme.setInterpolationNumber(interval_uni)
         dance_scheme.setTransitionTic(interval_acc)
         dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
@@ -451,7 +457,7 @@ class MovementGroups:
         modified_vy = self.cap_limit(self.vycap, -self.vycap, v_y)
         dance_scheme = Movements('gait_uni')
         dance_all_legs = self.default_stand
-        dance_speed = [[modified_vx,modified_vy,0],[modified_vx,modified_vy,0]]        # speed_x, speed_y, no_use
+        dance_speed = [[modified_vx,modified_vy,0]]        # speed_x, speed_y, no_use
         dance_attitude = [[0,0,0]]     # roll, pitch, yaw degree
         dance_scheme.setInterpolationNumber(interval_uni)
         dance_scheme.setTransitionTic(interval_acc)
@@ -478,10 +484,10 @@ class MovementGroups:
         modified_ht = self.cap_limit(self.highcap, -self.lowcap, ht)
         dance_scheme = Movements('height_move')
         dance_all_legs = [
-            [[ 0.06,-0.05,-0.07-modified_ht],[ 0.06,-0.05,-0.07-modified_ht]],
-            [[ 0.06, 0.05,-0.07-modified_ht],[ 0.06, 0.05,-0.07-modified_ht]],
-            [[-0.06,-0.05,-0.07-modified_ht],[-0.06,-0.05,-0.07-modified_ht]],
-            [[-0.06, 0.05,-0.07-modified_ht],[-0.06, 0.05,-0.07-modified_ht]]
+            [[ 0.06,-0.05,-0.07-modified_ht]],
+            [[ 0.06, 0.05,-0.07-modified_ht]],
+            [[-0.06,-0.05,-0.07-modified_ht]],
+            [[-0.06, 0.05,-0.07-modified_ht]]
         ]
         dance_speed = [[0,0,0]]        # speed_x, speed_y, no_use
         dance_attitude = [[0,0,0]]     # roll, pitch, yaw degree
@@ -510,10 +516,10 @@ class MovementGroups:
         modified_ht = self.cap_limit(self.highcap, -self.lowcap, ht)
         dance_scheme = Movements('twerk')
         dance_all_legs = [
-            [[ 0.06,-0.05,-0.07],[ 0.06,-0.05,-0.07]],
-            [[ 0.06, 0.05,-0.07],[ 0.06, 0.05,-0.07]],
-            [[-0.06,-0.05,-0.07-modified_ht],[-0.06,-0.05,-0.07-modified_ht]],
-            [[-0.06, 0.05,-0.07-modified_ht],[-0.06, 0.05,-0.07-modified_ht]]
+            [[ 0.06,-0.05,-0.07]],
+            [[ 0.06, 0.05,-0.07]],
+            [[-0.06,-0.05,-0.07-modified_ht]],
+            [[-0.06, 0.05,-0.07-modified_ht]]
         ]
         dance_speed = [[0,0,0]]        # speed_x, speed_y, no_use
         dance_attitude = [[0,0,0]]     # roll, pitch, yaw degree
@@ -544,16 +550,16 @@ class MovementGroups:
         dance_scheme = Movements('foreleg')
         dance_all_legs = []
         leg_1 = [
-            [[0.12,-0.06,-0.07+modified_ht],[0.12,-0.06,-0.07+modified_ht]],
-            [[0.06, 0.01,-0.07],[0.06, 0.01,-0.07]],
-            [[-0.06,-0.05,-0.09],[-0.06,-0.05,-0.09]],
-            [[-0.06, 0.05,-0.07],[-0.06, 0.05,-0.07]]
+            [[0.12,-0.06,-0.07+modified_ht]],
+            [[0.06, 0.01,-0.07]],
+            [[-0.06,-0.05,-0.09]],
+            [[-0.06, 0.05,-0.07]]
         ]
         leg_2 = [
-            [[0.06,-0.01,-0.07],[0.06,-0.01,-0.07]],
-            [[0.12, 0.06,-0.07+modified_ht],[0.12, 0.06,-0.07+modified_ht]],
-            [[-0.06,-0.05,-0.07],[-0.06,-0.05,-0.07]],
-            [[-0.06, 0.05,-0.09],[-0.06, 0.05,-0.09]]
+            [[0.06,-0.01,-0.07]],
+            [[0.12, 0.06,-0.07+modified_ht]],
+            [[-0.06,-0.05,-0.07]],
+            [[-0.06, 0.05,-0.09]]
         ]
         if leg_index == 'right':
             dance_all_legs = leg_1
@@ -632,7 +638,7 @@ class MovementGroups:
         dance_scheme.setLegsSequence(dance_all_legs)
         dance_scheme.setAttitudeSequence(dance_attitude)
         dance_scheme.setSpeedSequence(dance_speed)
-        dance_scheme.setTurnSequence([[40*m, 0, 0],[40*m,0,0]])
+        dance_scheme.setTurnSequence([[40*m, 0, 0]])
         self.MovementLib.append(dance_scheme)      # append dance
         
         return self.MovementLib
@@ -647,7 +653,7 @@ class MovementGroups:
         dance_attitude = [[0,0,0]]
         dance_scheme.setInterpolationNumber(20)
         dance_scheme.setLegsSequence(dance_all_legs)
-        dance_scheme.setAttitudeSequence([[0,-modified_angle,0],[0,-modified_angle,0]],"Forever")
+        dance_scheme.setAttitudeSequence([[0,-modified_angle,0]],"Forever")
         dance_scheme.setSpeedSequence(dance_speed)
         dance_scheme.setTurnSequence([[0, 0, 0]])
         self.MovementLib.append(dance_scheme)      # append dance
@@ -778,9 +784,9 @@ class MovementGroups:
         dance_attitude = [[0,20*1.414/2,30*1.414/2],[0,20*0.38268,30*0.92388],[0,0,30],[0,-20*0.38268,30*0.92388],[0,-20*1.414/2,30*1.414/2],[0,-20*0.92388,30*0.38268],[0,-20,0],[0,-20*0.92388,-30*0.38268],[0,-20*1.414/2,-30*1.414/2],[0,-20*0.38268,-30*0.92388],[0,0,-30],[0,20*0.38268,-30*0.92388],[0,20*1.414/2,-30*1.414/2],[0,20*0.92388,-30*0.38268],[0,20,0],[0,20*0.92388,30*0.38268],]         # roll, pitch, yaw
         
         dance_scheme.setInterpolationNumber(15)
-        dance_scheme.setLegsSequence(dance_all_legs,"Multiple",3)
-        dance_scheme.setAttitudeSequence(dance_attitude,"Multiple",3)
-        dance_scheme.setSpeedSequence(dance_speed,"Multiple",3)
+        dance_scheme.setLegsSequence(dance_all_legs,"Multiple",1)
+        dance_scheme.setAttitudeSequence(dance_attitude,"Multiple",1)
+        dance_scheme.setSpeedSequence(dance_speed,"Multiple",1)
         self.MovementLib.append(dance_scheme)      # append dance
 
         return self.MovementLib
@@ -817,23 +823,13 @@ class MovementGroups:
 
         # Both front legs lift + reach forward; back legs plant + squat slightly
         dance_all_legs = [
-            # FR (leg 1): stretch forward + lift up
-            [[ 0.12, -0.06, -0.07 + modified_ht],
-             [ 0.12, -0.06, -0.07 + modified_ht]],
-            # FL (leg 2): stretch forward + lift up
-            [[ 0.12,  0.06, -0.07 + modified_ht],
-             [ 0.12,  0.06, -0.07 + modified_ht]],
-            # BR (leg 3): plant and sink for balance
-            [[-0.06, -0.05, -0.09],
-             [-0.06, -0.05, -0.09]],
-            # BL (leg 4): plant and sink for balance
-            [[-0.06,  0.05, -0.09],
-             [-0.06,  0.05, -0.09]],
+            [[ 0.12, -0.06, -0.07 + modified_ht]],
+            [[ 0.12,  0.06, -0.07 + modified_ht]],
+            [[-0.06, -0.05, -0.09]],
+            [[-0.06,  0.05, -0.09]],
         ]
 
-        # Attitude: pitch up (tilt back for balance)
-        dance_attitude = [[0, modified_pitch, 0],
-                          [0, modified_pitch, 0]]
+        dance_attitude = [[0, modified_pitch, 0]]
 
         dance_speed = [[0, 0, 0]]
 
