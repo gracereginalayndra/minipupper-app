@@ -399,14 +399,21 @@ def _choreography_loop(build_movement, run_movement,
     _set_volume("70%")
     _set_music_active(True)
 
+    # Pre-sort moves so we can calculate timing before audio starts
+    sorted_moves = sorted(timed_choreography, key=lambda m: m[3])
+    if sorted_moves:
+        first_time_acc = sorted_moves[0][1]
+        # Defer audio so robot reaches first pose before first beat
+        _log(f"Audio delayed by {first_time_acc:.1f}s (first move time_acc)")
+        time.sleep(first_time_acc)
+
     # Start audio playback
-    # Double-pkill to prevent duplicate ffplay instances (race-safe)
     if wav_file:
         subprocess.run(
             ["pkill", "-f", f"ffplay.*{os.path.basename(wav_file)}"],
             capture_output=True, timeout=3
         )
-        time.sleep(0.3)
+        time.sleep(0.15)
         subprocess.run(
             ["pkill", "-f", f"ffplay.*{os.path.basename(wav_file)}"],
             capture_output=True, timeout=3
@@ -422,10 +429,6 @@ def _choreography_loop(build_movement, run_movement,
     _log(f"Audio player PID: {player.pid}")
 
     # Execute timed moves
-
-    # Sort moves by start_time just in case
-    sorted_moves = sorted(timed_choreography, key=lambda m: m[3])
-    max_moves = len(sorted_moves)
 
     # ── One-shot: build full MovementLib then execute ──
     full_lib = []
@@ -443,9 +446,16 @@ def _choreography_loop(build_movement, run_movement,
             _log(f"Audio ended at {start_time:.1f}s — stopping dance.")
             break
 
-        # HF Space baked timing: hold fills gap between consecutive moves
-        gap = sorted_moves[i + 1][3] - start_time if i + 1 < len(sorted_moves) else time_acc + 0.5
-        hold = max(gap - time_acc, 0.1)
+        # HF Space baked timing:
+        # Each move = Entry(time_acc) + Movement(hold) = gap between start times
+        # So hold = gap - time_acc. With fixed single-phase moves, this is accurate
+        # to ~0.01s quantization error per move.
+        if i + 1 < len(sorted_moves):
+            gap = sorted_moves[i + 1][3] - start_time
+            next_time_acc = sorted_moves[i + 1][1]
+            hold = max(gap - next_time_acc, 0.05)
+        else:
+            hold = max(time_acc + 0.5, 0.05)
 
         try:
             lib = build_movement(cmd, hold, angle, time_acc)
@@ -479,11 +489,10 @@ def _choreography_loop(build_movement, run_movement,
             audio_duration = 30.0
 
     timeout = audio_duration + 10.0
-    _log(f"One-shot: {moves_built} moves → {len(full_lib)} Movement objects, "
+    _log(f"One-shot: {moves_built} moves, {len(full_lib)} Movement objects, "
          f"audio={audio_duration:.0f}s, timeout={timeout:.0f}s")
 
     # Progress callback for periodic logging
-    _log("Registering progress callback...")
     def _progress(move_idx, total, elapsed):
         pct_moves = move_idx / total * 100 if total > 0 else 0
         pct_time = elapsed / timeout * 100
@@ -501,6 +510,13 @@ def _choreography_loop(build_movement, run_movement,
 
     _log(f"Dance {'completed' if ok else 'stopped'} ({moves_built} moves)")
 
+    # Wait for audio to finish naturally
+    if player.poll() is None:
+        try:
+            player.wait(timeout=5.0)
+        except subprocess.TimeoutExpired:
+            pass
+
     return {
         "ok": ok,
         "message": f"Danced to '{title}' - {moves_built} moves at {bpm} BPM ({genre_display})",
@@ -511,6 +527,10 @@ def _choreography_loop(build_movement, run_movement,
         "genre_display": genre_display,
         "source": "hf_space",
     }
+
+
+
+
 
 def _load_cache():
     try:
@@ -618,7 +638,7 @@ def cmd_search(query: str) -> dict:
         _log(f'Top result genre: {genre_info["genre_display"]}')
     return {"ok": True, "results": results, "count": len(results)}
 
-def cmd_dance(url: str, genre_override: str = None, no_activate: bool = False) -> dict:
+def cmd_dance(url: str, genre_override: str = None, no_activate: bool = True) -> dict:
     """
     Download -> HF beat analysis -> launch background dance -> return.
 
@@ -819,8 +839,8 @@ def cmd_execute(state_path: str) -> dict:
     # Initialize robot
     try:
         build_movement, run_movement = _init_robot()
-        if not no_activate:
-            _activate_robot(build_movement, run_movement)
+        # if not no_activate:
+        #     _activate_robot(build_movement, run_movement)
     except Exception as e:
         result = {"ok": False, "error": f"Robot init failed: {e}"}
         with open(DANCE_RESULT_FILE, "w") as f:

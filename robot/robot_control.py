@@ -116,32 +116,37 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         move.head_move(pitch_deg=15, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
         
     elif command in ("disco1"):
-        move.head_move(pitch_deg=15, yaw_deg=20, time_uni=duration, time_acc=time_acc)
-        move.head_move(pitch_deg=15, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
-        move.head_move(pitch_deg=-15, yaw_deg=20, time_uni=duration, time_acc=time_acc)
-        move.head_move(pitch_deg=-15, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
+        _n_subs = 2
+        _sub_tic = max(time_acc / _n_subs, 0.015)
+        # reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
+        _sub_hold = duration / (1 * _n_subs) if (1 * _n_subs) > 0 else 0.05
+        for _ in range(1):
+            move.head_move(pitch_deg=15, yaw_deg=20, time_uni=sub_hold, time_acc=_sub_tic)
+            move.head_move(pitch_deg=15, yaw_deg=-20, time_uni=sub_hold, time_acc=_sub_tic)
+            # move.head_move(pitch_deg=-15, yaw_deg=20, time_uni=duration, time_acc=time_acc)
+            # move.head_move(pitch_deg=-15, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
         
     elif command in ("disco2"):
         move.head_move(pitch_deg=15, yaw_deg=20, time_uni=duration, time_acc=time_acc)
         move.head_move(pitch_deg=-15, yaw_deg=-20, time_uni=duration, time_acc=time_acc)        
-        move.head_move(pitch_deg=-15, yaw_deg=20, time_uni=duration, time_acc=time_acc)
-        move.head_move(pitch_deg=15, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
+        # move.head_move(pitch_deg=-15, yaw_deg=20, time_uni=duration, time_acc=time_acc)
+        # move.head_move(pitch_deg=15, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
 
     elif command in ("disco3"):
         move.head_move(pitch_deg=15, yaw_deg=20, time_uni=duration, time_acc=time_acc)
         move.head_move(pitch_deg=-15, yaw_deg=20, time_uni=duration, time_acc=time_acc)
-        move.head_move(pitch_deg=15, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
-        move.head_move(pitch_deg=-15, yaw_deg=-20, time_uni=duration, time_acc=time_acc)     
+        # move.head_move(pitch_deg=15, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
+        # move.head_move(pitch_deg=-15, yaw_deg=-20, time_uni=duration, time_acc=time_acc)     
 
     elif command in ("seek"):
         move.head_move(pitch_deg=0, yaw_deg=30, time_uni=duration, time_acc=time_acc)
-        move.stop(time=0.1)
+        # move.stop(time=0.1)
         move.head_move(pitch_deg=0, yaw_deg=-30, time_uni=duration, time_acc=time_acc)
-        move.stop(time=0.1)
-        move.head_move(pitch_deg=0, yaw_deg=30, time_uni=duration, time_acc=time_acc)
-        move.stop(time=0.1)
-        move.head_move(pitch_deg=0, yaw_deg=-30, time_uni=duration, time_acc=time_acc)
-        move.stop(time=0.1)
+        # move.stop(time=0.1)
+        # move.head_move(pitch_deg=0, yaw_deg=30, time_uni=duration, time_acc=time_acc)
+        # move.stop(time=0.1)
+        # move.head_move(pitch_deg=0, yaw_deg=-30, time_uni=duration, time_acc=time_acc)
+        # move.stop(time=0.1)
      
         
 
@@ -229,10 +234,15 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
               
         
     elif command == "backleg_lift":
+        # _n_subs = 2
+        # _sub_tic = max(time_acc / _n_subs, 0.015)
+        # reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
+        # _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05 
+        # for _ in range(reps):
         move.backleg_lift("right", ht=0.01, time_uni=duration, time_acc=time_acc)
-        move.stop(time=0.1)   
+        # move.stop(time=0.1)   
         move.backleg_lift("left", ht=0.01, time_uni=duration, time_acc=time_acc) 
-        move.stop(time=0.1) 
+        # move.stop(time=0.1) 
         
     elif command == "greet":
         move.foreleg_lift("right", ht=0.005, time_uni=duration, time_acc=time_acc)
@@ -253,33 +263,35 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
     elif command == "headbang":
         """Rapid body pitch oscillation — looks like human headbanging."""
         _n_subs = 2
+        _sub_tic = max(time_acc / _n_subs, 0.015)
         reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
         _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
         for _ in range(reps):
-            move.head_move(pitch_deg=25, yaw_deg=0, time_uni=_sub_hold, time_acc=time_acc)
-            move.head_move(pitch_deg=-25, yaw_deg=0, time_uni=_sub_hold, time_acc=time_acc)
+            move.head_move(pitch_deg=25, yaw_deg=0, time_uni=_sub_hold, time_acc=_sub_tic)
+            move.head_move(pitch_deg=-25, yaw_deg=0, time_uni=_sub_hold, time_acc=_sub_tic)
 
     elif command == "bounce":
         """Body bob — raise on upbeats, lower on downbeats."""
-        _n_subs = 3
-        reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
-        _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
-        for _ in range(reps):
-            move.height_move(ht=0.03, time_uni=_sub_hold, time_acc=time_acc)
-            move.stop(time=0.1)
-            move.height_move(ht=-0.03, time_uni=_sub_hold, time_acc=time_acc)
-            move.stop(time=0.1)
+        # _n_subs = 2
+        # _sub_tic = max(time_acc / _n_subs, 0.015)
+        # reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
+        # _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
+        # for _ in range(reps):
+        move.height_move(ht=0.03, time_uni=duration, time_acc=time_acc)
+        move.height_move(ht=-0.03, time_uni=duration, time_acc=time_acc)
+        
 
     elif command in ("swagger", "body-roll"):
         """Groovy body roll — side-to-side tilt."""
         _n_subs = 2
-        reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
-        _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
-        for _ in range(reps):
-            move.body_row(row_deg=15, time_uni=_sub_hold, time_acc=time_acc)
-            move.body_row(row_deg=-15, time_uni=_sub_hold, time_acc=time_acc)
+        _sub_tic = max(time_acc / _n_subs, 0.015)
+        # reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
+        _sub_hold = duration / (1 * _n_subs) if (1 * _n_subs) > 0 else 0.05
+        for _ in range(1):
+            move.body_row(row_deg=15, time_uni=_sub_hold, time_acc=_sub_tic)
+            move.body_row(row_deg=-15, time_uni=_sub_hold, time_acc=_sub_tic)
 
-    elif command == "spin":
+    elif command == "spin": 
         """Dramatic rotation — 180 deg spin then 90 deg back."""
         spin_angle = angle if angle else 180
         move.rotate(angle=spin_angle)
@@ -328,14 +340,14 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
 
     elif command == "nod":
         """Subtle head nod — small 5 deg pitch oscillation."""
-        _sub_cycle = time_acc * 3  # 2 head moves + 1 stop = 3 × time_acc
-        _n_subs = 3
+        _n_subs = 2
+        _sub_tic = max(time_acc / _n_subs, 0.015)
         reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
         _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
         for _ in range(reps):
-            move.head_move(pitch_deg=5, yaw_deg=0, time_uni=_sub_hold, time_acc=time_acc)
-            move.head_move(pitch_deg=-5, yaw_deg=0, time_uni=_sub_hold, time_acc=time_acc)
-            move.stop(time=0.1)
+            move.head_move(pitch_deg=5, yaw_deg=0, time_uni=_sub_hold, time_acc=_sub_tic)
+            move.head_move(pitch_deg=-5, yaw_deg=0, time_uni=_sub_hold, time_acc=_sub_tic)
+            
 
     elif command == "lean":
         """Slow controlled body tilt in one direction, then return."""
@@ -421,25 +433,23 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
     elif command == "twerk":
     #     """🍑 Twerk — rapid up/down body movement with optional roll."""      
         _n_subs = 2
+        _sub_tic = max(time_acc / _n_subs, 0.015)
         reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
         _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
-        for _ in range(reps):
-            move.head_move(pitch_deg=-30, yaw_deg=0, time_uni=duration, time_acc=time_acc)
-            move.twerk(ht=-0.02, time_uni=duration, time_acc=time_acc)
-        # move.twerk(pitch_deg = -30, ht = 0.03, time_uni = 1, time_acc = 1)
+        for _ in range(2):
+            move.head_move(pitch_deg=-30, yaw_deg=0, time_uni=_sub_hold, time_acc=_sub_tic)
+            move.twerk(ht=-0.02, time_uni=_sub_hold, time_acc=_sub_tic)
 
     elif command == "wiggle":
     #     """🍑 wiggle — rapid left/right butt movement with optional roll."""      
-        _n_subs = 2
-        reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
-        _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
-        for _ in range(reps):
-            move.head_move(pitch_deg=-25, yaw_deg=0, time_uni=duration, time_acc=time_acc)
-            move.head_move(pitch_deg=-25, yaw_deg=20, time_uni=duration, time_acc=time_acc)
-            # move.stop_wiggle (time=0.1)
-            move.head_move(pitch_deg=-25, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
-            # move.stop_wiggle (time=0.1)
-        # move.twerk(pitch_deg = -30, ht = 0.03, time_uni = 1, time_acc = 1)
+        # _n_subs = 2
+        # _sub_tic = max(time_acc / _n_subs, 0.015)
+        # reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
+        # _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
+        # for _ in range(reps):
+        #     # move.head_move(pitch_deg=-25, yaw_deg=0, time_uni=_sub_hold, time_acc=_sub_tic)
+        move.head_move(pitch_deg=-25, yaw_deg=20, time_uni=duration, time_acc=time_acc)
+        move.head_move(pitch_deg=-25, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
 
     elif command == "shoulder_shrug":
         move.head_move(pitch_deg=-25, yaw_deg=0, time_uni=duration, time_acc=time_acc)
@@ -448,12 +458,17 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         move.head_move(pitch_deg=-25, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
         move.stop (time=0.1)
 
-    elif command == "butt_shrug":  
-        move.head_move(pitch_deg=25, yaw_deg=0, time_uni=duration, time_acc=time_acc)
+    elif command == "butt_shrug": 
+        # _n_subs = 2
+        # _sub_tic = max(time_acc / _n_subs, 0.015)
+        # reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
+        # _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05 
+        # for _ in range(reps):
+        # move.head_move(pitch_deg=25, yaw_deg=0, time_uni=duration, time_acc=time_acc)
         move.head_move(pitch_deg=25, yaw_deg=20, time_uni=duration, time_acc=time_acc)
-        move.stop_butt_shrug (time=0.1)
+        # move.stop_butt_shrug (time=0.1)
         move.head_move(pitch_deg=25, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
-        move.stop_butt_shrug (time=0.1)
+        # move.stop_butt_shrug (time=0.1)
     
         
 
