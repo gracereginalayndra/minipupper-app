@@ -328,7 +328,7 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
 
     elif command == "dip":
         """Slow dramatic lean — look down + tilt + lower body."""
-        move.height_move(ht=-0.02, time_uni=duration, time_acc=0.time_acc)
+        move.height_move(ht=-0.02, time_uni=duration, time_acc=time_acc)
         move.head_move(pitch_deg=-25, yaw_deg=0, time_uni=duration, time_acc=time_acc)
         move.body_row(row_deg=-15, time_uni=duration, time_acc=time_acc)
         move.stop(time=0.5)
