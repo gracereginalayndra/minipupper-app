@@ -442,17 +442,10 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
             move.twerk(ht=-0.02, time_uni=_sub_hold, time_acc=_sub_tic)
 
     elif command == "wiggle":
-        """🍑 Smooth wiggle trajectory — pitch forward, sway right/left.
-        Uses wiggle_trajectory() for a single 3-phase Movement with smooth
-        interpolation — eliminates redundant Entry phases between sub-moves."""
-        # _n_subs = 2
-        # _sub_tic = max(time_acc / _n_subs, 0.015)
-        # reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
-        # _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
-        # for _ in range(2):
-        move.wiggle_left(time_uni=duration, time_acc=time_acc)        
-        move.wiggle_right(time_uni=duration, time_acc=time_acc)        
-        # move.wiggle_trajectory(time_uni=duration, time_acc=time_acc)
+        """🍑 Multi-pose wiggle — same beat control as butt_shrug.
+        interp_num auto-derived from time_uni inside wiggle_left/right."""
+        move.wiggle_left(time_uni=duration, time_acc=time_acc)
+        move.wiggle_right(time_uni=duration, time_acc=time_acc)
         
 
     elif command == "shoulder_shrug":
