@@ -640,7 +640,7 @@ class MovementGroups:
     enabling more complicated movement based on your demands. By defaut, no arguments are needed, but you can 
     modify them on your own."""
 
-    def body_ellipse(self):
+    def body_ellipse(self, interp_num=8):
         """ This movement enables the pupper to draw a circle with it's body center in the x-y plane while keeping 
         it's origional orientation of the body.
         Params:
@@ -729,7 +729,7 @@ class MovementGroups:
         dance_speed    = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],]        # speed_x, speed_y, no_use
         dance_attitude = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[ 0,0,0],[0,0,0],[0,0,0],]   # roll, pitch, yaw
         
-        dance_scheme.setInterpolationNumber(8)
+        dance_scheme.setInterpolationNumber(interp_num)
         dance_scheme.setLegsSequence(dance_all_legs,"Multiple",1)
         dance_scheme.setAttitudeSequence(dance_attitude,"Multiple",1)
         dance_scheme.setSpeedSequence(dance_speed,"Multiple",1)
@@ -737,7 +737,7 @@ class MovementGroups:
 
         return self.MovementLib
 
-    def head_ellipse(self):
+    def head_ellipse(self, interp_num=8):
         """ This movement enables the pupper to draw an ellipse-shaped trajectory with it's head by edting the orientations of
          the body. The maximum pitching angle is 1/9 π and the maximum yawing angle is 1/6 π 
         """
@@ -752,7 +752,8 @@ class MovementGroups:
         dance_speed    = [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],] 
         dance_attitude = [[0,20*1.414/2,30*1.414/2],[0,20*0.38268,30*0.92388],[0,0,30],[0,-20*0.38268,30*0.92388],[0,-20*1.414/2,30*1.414/2],[0,-20*0.92388,30*0.38268],[0,-20,0],[0,-20*0.92388,-30*0.38268],[0,-20*1.414/2,-30*1.414/2],[0,-20*0.38268,-30*0.92388],[0,0,-30],[0,20*0.38268,-30*0.92388],[0,20*1.414/2,-30*1.414/2],[0,20*0.92388,-30*0.38268],[0,20,0],]         # roll, pitch, yaw
         
-        dance_scheme.setInterpolationNumber(8)
+        dance_scheme.setInterpolationNumber(interp_num)
+        dance_scheme.setTransitionTic(3)
         dance_scheme.setLegsSequence(dance_all_legs,"Multiple",1)
         dance_scheme.setAttitudeSequence(dance_attitude,"Multiple",1)
         dance_scheme.setSpeedSequence(dance_speed,"Multiple",1)
@@ -762,66 +763,119 @@ class MovementGroups:
 
 #----------- The level3 samples to DIY complicated movement END -----------# 
 
-    # def wiggle_trajectory(self, pitch_deg: float = -25, yaw_range: float = 20,
-    #                       hold: float = 1, time_acc: float = 1):
-    #     """3-phase smooth wiggle trajectory — pitch forward, sway right, sway left, return center.
+    def wiggle_left(self, pitch_deg = 0, yaw_deg = 0, time_uni = 1, time_acc = 1):
+        """Turn the head of the robot to a certain degree
+        Args: 
+            Pitch_deg: the angle you want the robot's head to look up or down 
+                        e.g. 20 ----> the pupper will lookup 20 degrees from pupper's own perspective
+            yaw_deg: the angle you want the robot's head to look left or right 
+                        e.g. 20 ----> the pupper will look right 20 degrees from pupper's own perspective
+            time_acc: how long it takes to reach the desired angle (unit: second)
+            time_uni: how long pupper will keep still at the desired pose (unit: second)
+        
+        Return:
+            Append the head turning movement into the MovementLib
+        """ 
+        if time_uni <= 0:
+            time_uni = self.dt
+        if time_acc <=0:
+            time_acc = self.dt
+        interval_uni = int(time_uni / self.dt)
+        interval_acc = int(time_acc / self.dt)
+        modified_pitch = self.cap_limit(self.pitchcap, -self.pitchcap, pitch_deg)
+        modified_yaw = self.cap_limit(self.yawcap, -self.yawcap, yaw_deg)
+        dance_scheme = Movements('head_move')
+        dance_all_legs = self.default_stand
+        dance_speed = [ [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0],
+                                               
+                        ]        # speed_x, speed_y, no_use
+        dance_attitude = [
+                          [0,-25,0],
+                          [0,-25,5],[0,-25,10],[0,-25,15],[0,-25,20], 
+                        ]     # roll, pitch, yaw degree
+        dance_scheme.setInterpolationNumber(5)
+        dance_scheme.setTransitionTic(interval_acc)
+        dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
+        self.MovementLib.append(dance_scheme)      # append dance
+        return self.MovementLib
+        
+        
 
-    #     Follows the head_ellipse pattern: one Entry phase then Multi-phase trajectory.
-    #     Each phase is smoothly interpolated by the MovementScheme.
-    #     Accounts for the > vs >= tick discrepancy in getNewPoint.
+    def wiggle_right(self, pitch_deg = 0, yaw_deg = 0, time_uni = 1, time_acc = 1):
+        """Turn the head of the robot to a certain degree
+        Args: 
+            Pitch_deg: the angle you want the robot's head to look up or down 
+                        e.g. 20 ----> the pupper will lookup 20 degrees from pupper's own perspective
+            yaw_deg: the angle you want the robot's head to look left or right 
+                        e.g. 20 ----> the pupper will look right 20 degrees from pupper's own perspective
+            time_acc: how long it takes to reach the desired angle (unit: second)
+            time_uni: how long pupper will keep still at the desired pose (unit: second)
+        
+        Return:
+            Append the head turning movement into the MovementLib
+        """ 
+        if time_uni <= 0:
+            time_uni = self.dt
+        if time_acc <=0:
+            time_acc = self.dt
+        interval_uni = int(time_uni / self.dt)
+        interval_acc = int(time_acc / self.dt)
+        modified_pitch = self.cap_limit(self.pitchcap, -self.pitchcap, pitch_deg)
+        modified_yaw = self.cap_limit(self.yawcap, -self.yawcap, yaw_deg)
+        dance_scheme = Movements('head_move')
+        dance_all_legs = self.default_stand
+        dance_speed = [ [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0],
+                                               
+                        ]        # speed_x, speed_y, no_use
+        dance_attitude = [
+                          [0,-25,15],[0,-25,10], [0,-25,5],[0,-25,0],
+                          [0,-25,-5],[0,-25,-10],[0,-25,-15],[0,-25,-20],
+                        ]     # roll, pitch, yaw degree
+        dance_scheme.setInterpolationNumber(8)
+        dance_scheme.setTransitionTic(interval_acc)
+        dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
+        self.MovementLib.append(dance_scheme)      # append dance
+        return self.MovementLib
 
-    #     Args:
-    #         pitch_deg: Forward lean angle (-25 default).
-    #         yaw_range: Max side-to-side sway angle (20 default).
-    #         hold: Total time for the trajectory after Entry (seconds).
-    #         time_acc: Entry phase duration (seconds).
+    def wiggle_trajectory(self, pitch_deg = -25, yaw_deg = 0, time_uni = 1, time_acc = 1):
+        """Turn the head of the robot to a certain degree
+        Args: 
+            Pitch_deg: the angle you want the robot's head to look up or down 
+                        e.g. 20 ----> the pupper will lookup 20 degrees from pupper's own perspective
+            yaw_deg: the angle you want the robot's head to look left or right 
+                        e.g. 20 ----> the pupper will look right 20 degrees from pupper's own perspective
+            time_acc: how long it takes to reach the desired angle (unit: second)
+            time_uni: how long pupper will keep still at the desired pose (unit: second)
+        
+        Return:
+            Append the head turning movement into the MovementLib
+        """ 
+        if time_uni <= 0:
+            time_uni = self.dt
+        if time_acc <=0:
+            time_acc = self.dt
+        interval_uni = int(time_uni / self.dt)
+        interval_acc = int(time_acc / self.dt)
+        modified_pitch = self.cap_limit(self.pitchcap, -self.pitchcap, pitch_deg)
+        modified_yaw = self.cap_limit(self.yawcap, -self.yawcap, yaw_deg)
+        dance_scheme = Movements('head_move')
+        dance_all_legs = self.default_stand
+        dance_speed = [ [0,0,0],
+                        [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0],
+                        [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0],                        
+                        ]        # speed_x, speed_y, no_use
+        dance_attitude = [[0,-25,0],
+                          [0,-25,5],[0,-25,10],[0,-25,15],[0,-25,20],
+                          [0,-25,15],[0,-25,10],[0,-25,5],[0,-25,0],
+                          [0,-25,-5],[0,-25,-10],[0,-25,-15],[0,-25,-20],
+                        ]     # roll, pitch, yaw degree
+        dance_scheme.setInterpolationNumber(13)
+        dance_scheme.setTransitionTic(interval_acc)
+        dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
+        self.MovementLib.append(dance_scheme)      # append dance
+        return self.MovementLib
 
-    #     Returns:
-    #         MovementLib with the appended Movement.
-    #     """
-    #     if hold <= 0:
-    #         hold = self.dt
-    #     if time_acc <= 0:
-    #         time_acc = self.dt
-        
-    #     n_phases = 4  # pitch_fwd -> sway_right -> sway_left -> return_center
-    #     # getCycleTicks = n_phases * interpolation * 1
-    #     # Actual ticks = n_phases * (interpolation + 1) due to > vs >=
-    #     # We want: n_phases * interpolation * dt ≈ hold
-    #     total_movement_ticks = max(int(hold / self.dt), n_phases)
-    #     # interpolation per phase = ceil(total / n_phases) - 1  (to account for the +1)
-    #     interval_uni = max(int((total_movement_ticks / n_phases) + 0.999) - 1, 1)
-    #     interval_acc = int(time_acc / self.dt)
-        
-    #     modified_pitch = self.cap_limit(self.pitchcap, -self.pitchcap, pitch_deg)
-    #     modified_yaw = self.cap_limit(self.yawcap, -self.yawcap, yaw_range)
-        
-    #     dance_scheme = Movements('wiggle_traj')
-        
-    #     # Legs: default_stand repeated for all phases
-    #     dance_all_legs = [[list(leg[0]) for _ in range(n_phases)] for leg in self.default_stand]
-        
-    #     # Speed: stationary for all phases
-    #     dance_speed = [[0, 0, 0] for _ in range(n_phases)]
-        
-    #     # Attitude trajectory: pitch_fwd -> sway_right -> sway_left -> return_center
-    #     dance_attitude = [
-    #         [0, modified_pitch, 0],               # phase 0: pitch forward
-    #         [0, modified_pitch, modified_yaw],     # phase 1: sway right
-    #         [0, modified_pitch, -modified_yaw],    # phase 2: sway left
-    #         [0, 0, 0],                            # phase 3: return to neutral
-    #     ]
-        
-    #     dance_scheme.setTransitionTic(interval_acc)
-    #     dance_scheme.setInterpolationNumber(interval_uni)
-    #     dance_scheme.setLegsSequence(dance_all_legs, "Multiple", 1)
-    #     dance_scheme.setAttitudeSequence(dance_attitude, "Multiple", 1)
-    #     dance_scheme.setSpeedSequence(dance_speed, "Multiple", 1)
-    #     self.MovementLib.append(dance_scheme)
-        
-    #     return self.MovementLib
-
-    def wiggle_trajectory(self, pitch_deg = 0, yaw_deg = 0, time_uni = 1, time_acc = 1):
+    def butt_shrug_trajectory(self, pitch_deg = 0, yaw_deg = 0, time_uni = 1, time_acc = 1):
         """Turn the head of the robot to a certain degree
         Args: 
             Pitch_deg: the angle you want the robot's head to look up or down 
@@ -848,16 +902,20 @@ class MovementGroups:
                         [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0],
                         [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0],                        
                         ]        # speed_x, speed_y, no_use
-        dance_attitude = [[0,0,0], [0,-5,0], [0,-10,0],[0,-15,0],[0,-20,0],[0,-25,0],
-                          [0,-25,5],[0,-25,10],[0,-25,15],[0,-25,20],
-                          [0,-25,15],[0,-25,10],[0,-25,5],[0,-25,0],
-                          [0,-25,-5],[0,-25,-10],[0,-25,-15],[0,-25,-20],
+        dance_attitude = [[0,0,0], [0,5,0], [0,10,0],[0,15,0],[0,20,0],[0,25,0],
+                          [0,25,5],[0,25,10],[0,25,15],[0,25,20],
+                          [0,25,15],[0,25,10],[0,25,5],[0,25,0],
+                          [0,25,-5],[0,25,-10],[0,25,-15],[0,25,-20],
                         ]     # roll, pitch, yaw degree
-        dance_scheme.setInterpolationNumber(18)
+        dance_scheme.setInterpolationNumber(6)
         dance_scheme.setTransitionTic(interval_acc)
         dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
         self.MovementLib.append(dance_scheme)      # append dance
         return self.MovementLib
+
+    
+
+    
 
     def front_kick(self, ht = 0.04, pitch_deg = 15, time_uni = 1, time_acc = 1):
         """Both front legs kick up simultaneously — like a horse rearing up.
