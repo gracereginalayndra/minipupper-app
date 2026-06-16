@@ -484,12 +484,17 @@ class MovementGroups:
         interval_acc = int(time_acc / self.dt)
         modified_ht = self.cap_limit(self.highcap, -self.lowcap, ht)
         dance_scheme = Movements('twerk')
-        dance_all_legs = [
-            [[ 0.06,-0.05,-0.07]],
-            [[ 0.06, 0.05,-0.07]],
-            [[-0.06,-0.05,-0.07-modified_ht]],
-            [[-0.06, 0.05,-0.07-modified_ht]]
-        ]
+        dance_all_legs = []
+        dance_all_legs.append([[ 0.06,-0.05,-0.07],[ 0.06,-0.05,-0.07],])
+        dance_all_legs.append([[ 0.06, 0.05,-0.07],[ 0.06, 0.05,-0.07],])
+        dance_all_legs.append([[-0.06,-0.05,-0.07-modified_ht],[-0.06,-0.05,-0.07],])
+        dance_all_legs.append([[-0.06, 0.05,-0.07-modified_ht],[-0.06, 0.05,-0.07],])
+        # dance_all_legs = [
+        #     [[ 0.06,-0.05,-0.07]],
+        #     [[ 0.06, 0.05,-0.07]],
+        #     [[-0.06,-0.05,-0.07-modified_ht]],
+        #     [[-0.06, 0.05,-0.07-modified_ht]]
+        # ]
         dance_speed = [[0,0,0]]        # speed_x, speed_y, no_use
         dance_attitude = [[0,0,0]]     # roll, pitch, yaw degree
         dance_scheme.setTransitionTic(interval_acc)
@@ -835,6 +840,84 @@ class MovementGroups:
         dance_attitude = [
                           [0,-25,0],
                           [0,-25,-5],[0,-25,-10],[0,-25,-15],[0,-25,-20],
+                        ]     # roll, pitch, yaw degree
+        dance_scheme.setInterpolationNumber(interp_num)
+        dance_scheme.setTransitionTic(interval_acc)
+        dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
+        self.MovementLib.append(dance_scheme)      # append dance
+        return self.MovementLib
+
+    def butt_shrug_left(self, pitch_deg = 0, yaw_deg = 0, time_uni = 1, time_acc = 1, interp_num = None):
+        """Turn the head of the robot to a certain degree
+        Args: 
+            Pitch_deg: the angle you want the robot's head to look up or down 
+                        e.g. 20 ----> the pupper will lookup 20 degrees from pupper's own perspective
+            yaw_deg: the angle you want the robot's head to look left or right 
+                        e.g. 20 ----> the pupper will look right 20 degrees from pupper's own perspective
+            time_acc: how long it takes to reach the desired angle (unit: second)
+            time_uni: how long pupper will keep still at the desired pose (unit: second)
+            interp_num: interpolation steps between pose transitions (None = auto from time_uni)
+        
+        Return:
+            Append the head turning movement into the MovementLib
+        """ 
+        if time_uni <= 0:
+            time_uni = self.dt
+        if time_acc <=0:
+            time_acc = self.dt
+        interval_uni = int(time_uni / self.dt)
+        interval_acc = int(time_acc / self.dt)
+        if interp_num is None:
+            interp_num = max(1, round(interval_uni / 5))  # 5 poses, fill time_uni
+        modified_pitch = self.cap_limit(self.pitchcap, -self.pitchcap, pitch_deg)
+        modified_yaw = self.cap_limit(self.yawcap, -self.yawcap, yaw_deg)
+        dance_scheme = Movements('head_move')
+        dance_all_legs = self.default_stand
+        dance_speed = [ [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0],
+                                               
+                        ]        # speed_x, speed_y, no_use
+        dance_attitude = [
+                          [0,25,0],
+                          [0,25,5],[0,25,10],[0,25,15],[0,25,20], 
+                        ]     # roll, pitch, yaw degree
+        dance_scheme.setInterpolationNumber(interp_num)
+        dance_scheme.setTransitionTic(interval_acc)
+        dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
+        self.MovementLib.append(dance_scheme)      # append dance
+        return self.MovementLib
+
+    def butt_shrug_right(self, pitch_deg = 0, yaw_deg = 0, time_uni = 1, time_acc = 1, interp_num = None):
+        """Turn the head of the robot to a certain degree
+        Args: 
+            Pitch_deg: the angle you want the robot's head to look up or down 
+                        e.g. 20 ----> the pupper will lookup 20 degrees from pupper's own perspective
+            yaw_deg: the angle you want the robot's head to look left or right 
+                        e.g. 20 ----> the pupper will look right 20 degrees from pupper's own perspective
+            time_acc: how long it takes to reach the desired angle (unit: second)
+            time_uni: how long pupper will keep still at the desired pose (unit: second)
+            interp_num: interpolation steps between pose transitions (None = auto from time_uni)
+        
+        Return:
+            Append the head turning movement into the MovementLib
+        """ 
+        if time_uni <= 0:
+            time_uni = self.dt
+        if time_acc <=0:
+            time_acc = self.dt
+        interval_uni = int(time_uni / self.dt)
+        interval_acc = int(time_acc / self.dt)
+        if interp_num is None:
+            interp_num = max(1, round(interval_uni / 5))  # 5 poses, fill time_uni
+        modified_pitch = self.cap_limit(self.pitchcap, -self.pitchcap, pitch_deg)
+        modified_yaw = self.cap_limit(self.yawcap, -self.yawcap, yaw_deg)
+        dance_scheme = Movements('head_move')
+        dance_all_legs = self.default_stand
+        dance_speed = [ [0,0,0], [0,0,0], [0,0,0], [0,0,0], [0,0,0],
+                                               
+                        ]        # speed_x, speed_y, no_use
+        dance_attitude = [
+                          [0,25,0],
+                          [0,25,-5],[0,25,-10],[0,25,-15],[0,25,-20],
                         ]     # roll, pitch, yaw degree
         dance_scheme.setInterpolationNumber(interp_num)
         dance_scheme.setTransitionTic(interval_acc)
