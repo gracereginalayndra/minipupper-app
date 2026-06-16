@@ -389,12 +389,13 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
     # ── Genre Signatures ────────────────────────────────────────
     elif command == "head_ellipse":
         """🤘 Head Oscillation — head traces a fast ellipse (head_ellipse)."""
-        move.head_ellipse()
+        move.head_ellipse(interp_num = time_acc*16)
+        
         # move.stop(time=0.1)
 
     elif command == "body_ellipse":
         """🎤 Swim — all 4 legs trace circles, body swims in place (body_cycle)."""
-        move.body_ellipse()
+        move.body_ellipse(interp_num = time_acc*16)
         # move.stop(time=0.1)
 
     elif command == "head_cycle":
@@ -444,14 +445,22 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         """🍑 Smooth wiggle trajectory — pitch forward, sway right/left.
         Uses wiggle_trajectory() for a single 3-phase Movement with smooth
         interpolation — eliminates redundant Entry phases between sub-moves."""
-        move.wiggle_trajectory()
+        # _n_subs = 2
+        # _sub_tic = max(time_acc / _n_subs, 0.015)
+        # reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
+        # _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
+        # for _ in range(2):
+        move.wiggle_left(time_uni=duration, time_acc=time_acc)        
+        move.wiggle_right(time_uni=duration, time_acc=time_acc)        
+        # move.wiggle_trajectory(time_uni=duration, time_acc=time_acc)
+        
 
     elif command == "shoulder_shrug":
         # move.head_move(pitch_deg=-25, yaw_deg=0, time_uni=duration, time_acc=time_acc)
         move.head_move(pitch_deg=-25, yaw_deg=20, time_uni=duration, time_acc=time_acc)
-        # move.stop (time=0.1)
+        move.stop (time=0.1)
         move.head_move(pitch_deg=-25, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
-        # move.stop (time=0.1)
+        move.stop (time=0.1)
 
     elif command == "butt_shrug": 
         # _n_subs = 2
@@ -459,11 +468,13 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         # reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
         # _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05 
         # for _ in range(reps):
-        # move.head_move(pitch_deg=25, yaw_deg=0, time_uni=duration, time_acc=time_acc)
-        move.head_move(pitch_deg=25, yaw_deg=20, time_uni=duration, time_acc=time_acc)
-        # move.stop_butt_shrug (time=0.1)
         move.head_move(pitch_deg=25, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
+        move.head_move(pitch_deg=25, yaw_deg=20, time_uni=duration, time_acc=time_acc)
+        # move.butt_shrug_left(time_uni=duration, time_acc=time_acc)
         # move.stop_butt_shrug (time=0.1)
+        # move.butt_shrug_right(time_uni=duration, time_acc=time_acc)
+        # move.stop_butt_shrug (time=0.1)
+        # move.butt_shrug_trajectory(time_uni=duration, time_acc=time_acc)
     
         
 
