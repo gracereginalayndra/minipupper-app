@@ -387,15 +387,15 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         move.stop(time=0.2)
 
     # ── Genre Signatures ────────────────────────────────────────
-    elif command == "sig:rock":
+    elif command == "head_ellipse":
         """🤘 Head Oscillation — head traces a fast ellipse (head_ellipse)."""
         move.head_ellipse()
-        move.stop(time=0.1)
+        # move.stop(time=0.1)
 
-    elif command == "sig:pop":
+    elif command == "body_ellipse":
         """🎤 Swim — all 4 legs trace circles, body swims in place (body_cycle)."""
-        move.body_cycle()
-        move.stop(time=0.1)
+        move.body_ellipse()
+        # move.stop(time=0.1)
 
     elif command == "head_cycle":
         """🤘 Quick head oscillation — 8-point ellipse in ~0.6s."""
@@ -441,15 +441,10 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
             move.twerk(ht=-0.02, time_uni=_sub_hold, time_acc=_sub_tic)
 
     elif command == "wiggle":
-    #     """🍑 wiggle — rapid left/right butt movement with optional roll."""      
-        # _n_subs = 2
-        # _sub_tic = max(time_acc / _n_subs, 0.015)
-        # reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
-        # _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
-        # for _ in range(reps):
-        #     # move.head_move(pitch_deg=-25, yaw_deg=0, time_uni=_sub_hold, time_acc=_sub_tic)
-        move.head_move(pitch_deg=-25, yaw_deg=20, time_uni=duration, time_acc=time_acc)
-        move.head_move(pitch_deg=-25, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
+        """🍑 Smooth wiggle trajectory — pitch forward, sway right/left.
+        Uses wiggle_trajectory() for a single 3-phase Movement with smooth
+        interpolation — eliminates redundant Entry phases between sub-moves."""
+        move.wiggle_trajectory()
 
     elif command == "shoulder_shrug":
         # move.head_move(pitch_deg=-25, yaw_deg=0, time_uni=duration, time_acc=time_acc)
