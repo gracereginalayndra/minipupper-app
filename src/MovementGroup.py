@@ -485,10 +485,15 @@ class MovementGroups:
         modified_ht = self.cap_limit(self.highcap, -self.lowcap, ht)
         dance_scheme = Movements('twerk')
         dance_all_legs = []
-        dance_all_legs.append([[ 0.06,-0.05,-0.07],[ 0.06,-0.05,-0.07],])
-        dance_all_legs.append([[ 0.06, 0.05,-0.07],[ 0.06, 0.05,-0.07],])
-        dance_all_legs.append([[-0.06,-0.05,-0.07-modified_ht],[-0.06,-0.05,-0.07],])
-        dance_all_legs.append([[-0.06, 0.05,-0.07-modified_ht],[-0.06, 0.05,-0.07],])
+        # dance_all_legs.append([[ 0.06,-0.05,-0.07], [ 0.06,-0.05,-0.07],[ 0.06,-0.05,-0.07],])
+        # dance_all_legs.append([[ 0.06, 0.05,-0.07], [ 0.06, 0.05,-0.07],[ 0.06, 0.05,-0.07],])
+        # dance_all_legs.append([[-0.06,-0.05,-0.07], [-0.06,-0.05,-0.07-modified_ht],[-0.06,-0.05,-0.07],])
+        # dance_all_legs.append([[-0.06, 0.05,-0.07], [-0.06, 0.05,-0.07-modified_ht],[-0.06, 0.05,-0.07],])
+
+        dance_all_legs.append([[ 0.06,-0.05,-0.07], [ 0.06,-0.05,-0.07],])
+        dance_all_legs.append([[ 0.06, 0.05,-0.07], [ 0.06, 0.05,-0.07],])
+        dance_all_legs.append([[-0.06,-0.05,-0.07], [-0.06,-0.05,-0.07-modified_ht],])
+        dance_all_legs.append([[-0.06, 0.05,-0.07], [-0.06, 0.05,-0.07-modified_ht],])
         # dance_all_legs = [
         #     [[ 0.06,-0.05,-0.07]],
         #     [[ 0.06, 0.05,-0.07]],
