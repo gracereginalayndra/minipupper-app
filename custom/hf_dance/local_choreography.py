@@ -32,14 +32,13 @@ GENRE_POOLS = {
         # Vibe: aggressive headbanging, swagger, rear energy
         # Signature: headbang (still #1), sig:rock (windmill head)
         "moves": [
-            "headbang", "sig:rock", "butt_shrug", "swagger", "dip",
-            "bounce", "body_row", "backleg_lift", "twerk",
-            "wiggle",
+            "headbang", "bounce", "swagger",
+             
+            
         ],
         "weights": [
-            0.16, 0.04, 0.12, 0.13, 0.09,
-            0.08, 0.12, 0.07, 0.11,
-            0.08,
+            0.3, 0.4, 0.3
+            
         ],
     },
     "classical": {
@@ -59,14 +58,18 @@ GENRE_POOLS = {
         # Vibe: energetic, varied, body waves, twerks, sassy
         # Signature: sig:pop (body wave), twerk, wiggle
         "moves": [
-            "disco1", "bounce", "swagger", "look_right", "look_left",
-            "look_up", "look_down", "body_row", "backleg_lift", "twerk",
-            "wiggle", "butt_shrug",
+            # "backleg_lift", "bounce", "body_ellipse"
+            # "look_up", "look_down", "body_row", "backleg_lift", "twerk", "butt_shrug",
+            # "butt_shrug", "wiggle", "swagger"
+            "twerk", "swagger", "wiggle", "butt_shrug"
         ],
         "weights": [
-            0.14, 0.11, 0.10, 0.09,
-            0.09, 0.08, 0.08, 0.07, 0.06,
-            0.06, 0.05, 0.07, 
+            # 0.14, 0.11, 0.10, 0.09,
+            # 0.09, 0.08, 0.08, 0.07, 0.06,
+            # 0.06, 0.05, 0.07, 
+            # 0.5, 0.5, # All weight on wiggle for testing
+            0.18, 0.3, 0.3, 0.22
+            
         ],
     },
     "disco": {

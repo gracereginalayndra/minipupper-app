@@ -432,19 +432,16 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         move.MovementLib.append(_s)
 
     elif command == "twerk":
-    #     """🍑 Twerk — rapid up/down body movement with optional roll."""      
-        # _n_subs = 2
-        # _sub_tic = max(time_acc / _n_subs, 0.015)
-        # reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
-        # _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
-        # for _ in range(1):
-        #     # move.head_move(pitch_deg=-30, yaw_deg=0, time_uni=_sub_hold, time_acc=_sub_tic)
-        #     # move.head_move(pitch_deg=20, yaw_deg=0, time_uni=_sub_hold, time_acc=_sub_tic)
-        move.twerk(ht=0.03, time_uni=duration, time_acc=time_acc)
-        move.twerk(ht=-0.03, time_uni=duration, time_acc=time_acc)
-        move.twerk(ht=0.03, time_uni=duration, time_acc=time_acc)
-        move.twerk(ht=-0.03, time_uni=duration, time_acc=time_acc)
+        """🍑 Twerk — single-pose hold + stop for smooth return."""
+        _n_subs = 2
+        _sub_tic = max(time_acc / _n_subs, 0.015)
+        reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
+        _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05 
+        for _ in range(reps):
+            move.twerk(ht=0.02, time_uni=_sub_hold, time_acc=_sub_tic)                   
+            move.twerk(ht=-0.02, time_uni=_sub_hold, time_acc=_sub_tic)
             
+          
 
     elif command == "wiggle":
         """🍑 Multi-pose wiggle — same beat control as butt_shrug.

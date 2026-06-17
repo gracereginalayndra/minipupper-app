@@ -33,6 +33,7 @@ import subprocess
 import sys
 import time
 from local_choreography import enrich_choreography, set_logger
+from dance_face import generate_face_cues, DanceFace
 
 # -- HF API -----------------------------------------------------------------
 
@@ -57,7 +58,7 @@ def _log(msg: str):
             f.write(f"[{time.strftime('%H:%M:%S')}] {msg}\n")
     except OSError:
         pass
-    
+
 
 # Inject logger into local choreography module
 set_logger(_log)
@@ -74,10 +75,10 @@ def _find_dance_pid():
                 return pid
             except (OSError, ProcessLookupError):
                 pass
-            
+
     except (ValueError, OSError):
         pass
-    
+
     return None
 
 def _find_audio_pid():
@@ -91,10 +92,10 @@ def _find_audio_pid():
                 return pid
             except (OSError, ProcessLookupError):
                 pass
-            
+
     except (ValueError, OSError):
         pass
-    
+
     return None
 
 def _stop_audio():
@@ -115,7 +116,7 @@ def _stop_audio():
                 os.kill(pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
-            
+
         except Exception as e:
             _log(f"Error stopping audio: {e}")
     for f in [AUDIO_PID_FILE, MUSIC_ACTIVE_FLAG]:
@@ -123,7 +124,7 @@ def _stop_audio():
             os.remove(f)
         except OSError:
             pass
-        
+
     _log("Audio stopped.")
 
 # -- Volume Control ----------------------------------------------------------
@@ -135,13 +136,13 @@ def _set_music_active(active: bool):
             open(MUSIC_ACTIVE_FLAG, "w").close()
         except OSError:
             pass
-        
+
     else:
         try:
             os.remove(MUSIC_ACTIVE_FLAG)
         except OSError:
             pass
-        
+
 def _set_volume(pct: str = "70%"):
     """Set speaker volume via shared audio_util (auto-detects card)."""
     try:
@@ -150,7 +151,7 @@ def _set_volume(pct: str = "70%"):
         _av(pct)
     except Exception:
         pass
-    
+
 
 # -- Task Status Updater (LCD display) ---------------------------------------
 
@@ -378,7 +379,7 @@ def _activate_robot(build_movement, run_movement):
 def _choreography_loop(build_movement, run_movement,
                        beat_info: dict, timed_choreography: list,
                        wav_file: str, title: str,
-                       genre: str = "unknown", genre_display: str = "Generic") -> dict:
+                       genre: str = "unknown", genre_display: str = "Generic", dance_face=None, face_cues=None) -> dict:
     """
     Main dance loop: play audio while executing timed moves.
     timed_choreography: list of (cmd, duration, angle, start_time) tuples.
@@ -405,7 +406,17 @@ def _choreography_loop(build_movement, run_movement,
         first_time_acc = sorted_moves[0][1]
         # Defer audio so robot reaches first pose before first beat
         _log(f"Audio delayed by {first_time_acc:.1f}s (first move time_acc)")
+
         time.sleep(first_time_acc)
+
+    # Start face display thread (if DanceFace provided)
+    if dance_face and face_cues:
+        try:
+            dance_face.start(face_cues, audio_delay=0.0, stop_flag_path=DANCE_ACTIVE_FLAG)
+            _log(f"Face display thread started: {len(face_cues)} cues")
+        except Exception as e:
+            _log(f"Face display start failed (non-fatal): {e}")
+
 
     # Start audio playback
     if wav_file:
@@ -436,7 +447,7 @@ def _choreography_loop(build_movement, run_movement,
 
     for i, move in enumerate(sorted_moves):
         cmd, time_acc, angle, start_time = move
-        
+
         if not os.path.exists(DANCE_ACTIVE_FLAG):
             _log("Dance stopped during build - abort.")
             break
@@ -665,7 +676,7 @@ def cmd_dance(url: str, genre_override: str = None, no_activate: bool = True) ->
             os.remove(f)
         except OSError:
             pass
-        
+
     cache = _load_cache()
     audio_file = cache.get(url)
     if audio_file and os.path.exists(audio_file):
@@ -735,6 +746,11 @@ def cmd_dance(url: str, genre_override: str = None, no_activate: bool = True) ->
     timed = enrich_choreography(timed, genre, url or title)
     _log(f"HF Space: {len(timed)} timed moves, genre: {genre_display}")
 
+    # Generate face-display cues synced to BPM and genre
+    duration = beat_info.get("duration", 180.0)
+    face_cues_dance = generate_face_cues(beat_info.get("bpm", 120), duration, genre)
+    _log(f"Face cues: {len(face_cues_dance)} display changes across {duration:.0f}s")
+
     # Save state for background process
     state = {
         "beat_info": beat_info,
@@ -744,6 +760,7 @@ def cmd_dance(url: str, genre_override: str = None, no_activate: bool = True) ->
         "genre": genre,
         "genre_display": genre_display,
         "no_activate": no_activate,
+        "face_cues": face_cues_dance,
     }
     with open(DANCE_STATE_FILE, "w") as f:
         json.dump(state, f, indent=2)
@@ -847,22 +864,27 @@ def cmd_execute(state_path: str) -> dict:
             json.dump(result, f, indent=2)
         return result
 
+    # Init face display
+    face_cues = state.get("face_cues", [])
+    dance_face = None
+    if face_cues:
+        try:
+            dance_face = DanceFace()
+            _log(f"Face display ready: {len(face_cues)} cues")
+        except Exception as e:
+            _log(f"Face init failed (non-fatal): {e}")
+            dance_face = None
+
     # Dance!
     try:
         result = _choreography_loop(build_movement, run_movement,
                                      beat_info, timed_choreo, wav_path, title,
-                                     genre=genre, genre_display=genre_display)
+                                     genre=genre, genre_display=genre_display, dance_face=dance_face, face_cues=face_cues)
     except Exception as e:
         result = {"ok": False, "error": f"Dance loop crashed: {e}"}
         _log(f"Dance loop error: {e}")
 
     result["status"] = "completed"
-    result["bpm"] = beat_info.get("bpm", 120)
-    result["title"] = title
-    result["genre"] = genre
-    result["genre_display"] = genre_display
-    result["source"] = "hf_space"
-
     # Deactivate robot (only if we activated it)
     if not no_activate:
         try:
@@ -872,6 +894,12 @@ def cmd_execute(state_path: str) -> dict:
             _log("Robot deactivated.")
         except Exception as e:
             _log(f"Deactivation error: {e}")
+
+    # Cleanup face display
+    if dance_face:
+        dance_face.stop()
+        dance_face.show_now(0)  # REST after dance
+        _log("Face display stopped.")
 
     # Write result
     with open(DANCE_RESULT_FILE, "w") as f:
@@ -937,7 +965,7 @@ def _stop_background_dance():
                 os.kill(pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
-            
+
         except Exception as e:
             _log(f"Error killing dance process: {e}")
 
@@ -1001,7 +1029,7 @@ def cmd_stop() -> dict:
             os.remove(f)
         except OSError:
             pass
-        
+
     _set_music_active(False)
 
     _log("Dance stopped.")
@@ -1066,7 +1094,7 @@ def main():
             json.dump(result, f, indent=2)
     except OSError:
         pass
-    
+
     sys.exit(0 if result.get("ok") else 1)
 
 if __name__ == "__main__":
