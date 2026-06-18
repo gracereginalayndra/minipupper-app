@@ -659,7 +659,7 @@ class MinipupperOperator:
                     if hasattr(self, 'task_watcher') and self.task_watcher:
                         self.task_watcher.write_tasks(task_payloads)
                         self.logger.info("Phase 2: Wrote %d task(s) to tasks.json for agent", len(task_payloads))
-                        if self.gateway_client and self.gateway_client.is_connected:
+                        if self.gateway_client:
                             cron_id = getattr(self, "_cron_job_id", "")
                             if cron_id:
                                 self.gateway_client.trigger_cron(cron_id)
@@ -1018,35 +1018,42 @@ class MinipupperOperator:
     
     
     def _pending_task_watcher(self):
-        """Check tasks.json every 5s for stale pending tasks (>30s old).
+        """Check tasks/pending/ every 5s for stale pending tasks (>30s old).
         
         If a pending task has been sitting untouched — likely a missed
-        cron.run trigger — retrigger the cron.
+        cron.run trigger — retrigger the cron. Scans the per-file task
+        directory directly instead of relying on the legacy tasks.json rebuild.
         """
         cron_id = getattr(self, "_cron_job_id", "")
         if not cron_id:
             self.logger.warning("PendingTaskWatcher: No cron_job_id configured")
             return
 
-        tasks_file = os.path.expanduser("~/minipupper-app/tasks.json")
+        pending_dir = os.path.expanduser("~/minipupper-app/tasks/pending")
 
         while self.is_running and not self._stop_event.is_set():
             time.sleep(5)
             try:
-                if not os.path.exists(tasks_file):
+                if not os.path.isdir(pending_dir):
                     continue
-                with open(tasks_file) as f:
-                    data = json.load(f)
-                tasks = data.get("tasks", {})
-                for tid, t in list(tasks.items()):
-                    if t.get("status") == "pending" and not t.get("startedAt"):
-                        age = time.time() - t.get("createdAt", 0)
-                        if age > 30 and self.gateway_client and self.gateway_client.is_connected:
-                            t["startedAt"] = time.time()
-                            with open(tasks_file, "w") as f:
-                                json.dump(data, f, indent=2)
+                for fname in sorted(os.listdir(pending_dir)):
+                    if not fname.endswith(".json"):
+                        continue
+                    fpath = os.path.join(pending_dir, fname)
+                    try:
+                        with open(fpath) as f:
+                            task = json.load(f)
+                    except (json.JSONDecodeError, OSError):
+                        continue
+                    if task.get("status") == "pending":
+                        age = time.time() - task.get("createdAt", 0)
+                        if age > 30 and self.gateway_client:
+                            # Mark stale in file to prevent re-trigger loops
+                            task["startedAt"] = time.time()
+                            with open(fpath, "w") as f:
+                                json.dump(task, f, indent=2)
                             self.gateway_client.trigger_cron(cron_id)
-                            self.logger.info("PendingTaskWatcher: Retriggered cron for stale task %s (age=%ds)", tid, int(age))
+                            self.logger.info("PendingTaskWatcher: Retriggered cron for stale task %s (age=%ds)", fname, int(age))
                             break
             except Exception as e:
                 self.logger.warning("PendingTaskWatcher error: %s", e)

@@ -267,8 +267,8 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
         _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
         for _ in range(reps):
-            move.head_move(pitch_deg=25, yaw_deg=0, time_uni=_sub_hold, time_acc=_sub_tic)
-            move.head_move(pitch_deg=-25, yaw_deg=0, time_uni=_sub_hold, time_acc=_sub_tic)
+            move.head_move(pitch_deg=15, yaw_deg=0, time_uni=_sub_hold, time_acc=_sub_tic)
+            move.head_move(pitch_deg=-15, yaw_deg=0, time_uni=_sub_hold, time_acc=_sub_tic)
 
     elif command == "bounce":
         """Body bob — raise on upbeats, lower on downbeats."""
@@ -277,8 +277,8 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         # reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
         # _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
         # for _ in range(reps):
-        move.height_move(ht=0.03, time_uni=duration, time_acc=time_acc)
-        move.height_move(ht=-0.03, time_uni=duration, time_acc=time_acc)
+        move.height_move(ht=0.02, time_uni=duration, time_acc=time_acc)
+        move.height_move(ht=-0.01, time_uni=duration, time_acc=time_acc)
         
 
     elif command in ("swagger", "body-roll"):
@@ -437,7 +437,7 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         _sub_tic = max(time_acc / _n_subs, 0.015)
         reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
         _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05 
-        for _ in range(reps):
+        for _ in range(1):
             move.twerk(ht=0.02, time_uni=_sub_hold, time_acc=_sub_tic)                   
             move.twerk(ht=-0.02, time_uni=_sub_hold, time_acc=_sub_tic)
             
@@ -451,11 +451,18 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         
 
     elif command == "shoulder_shrug":
-        # move.head_move(pitch_deg=-25, yaw_deg=0, time_uni=duration, time_acc=time_acc)
-        move.head_move(pitch_deg=-25, yaw_deg=20, time_uni=duration, time_acc=time_acc)
-        move.stop (time=0.1)
-        move.head_move(pitch_deg=-25, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
-        move.stop (time=0.1)
+        _n_subs = 2
+        _sub_tic = max(time_acc / _n_subs, 0.015)
+        reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
+        _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
+        for _ in range(1):
+            # move.head_move(pitch_deg=-25, yaw_deg=0, time_uni=duration, time_acc=time_acc)
+            move.head_move(pitch_deg=0, yaw_deg=15, time_uni=duration, time_acc=time_acc)
+            # move.stop (time=0.1)
+            move.head_move(pitch_deg=0, yaw_deg=15, time_uni=duration, time_acc=time_acc)
+            # move.stop (time=0.1)
+            # move.head_move(pitch_deg=0, yaw_deg=-15, time_uni=duration, time_acc=time_acc)
+            # move.stop (time=0.1)
 
     elif command == "butt_shrug": 
         # _n_subs = 2

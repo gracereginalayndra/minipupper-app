@@ -202,3 +202,38 @@ class DanceFace:
                 self.disp.show_state(_resolve_state(state_val))
             except Exception:
                 pass
+
+
+def face_cues_from_choreography(timed_moves: list, genre: str = "pop") -> list:
+    """
+    Generate face-change cues from the actual choreography timestamps.
+
+    Instead of synthesizing timestamps from BPM, this uses the start_time
+    of every Nth entry in the timed choreography. This naturally tracks
+    variable tempo because it follows whatever timing the HF Space baked in.
+
+    Args:
+        timed_moves: List of (cmd, duration, angle, start_time) tuples.
+        genre: Genre string for pacing selection.
+
+    Returns:
+        List of (cmd, time_acc, angle, start_time) tuples in the same
+        format as generate_face_cues().
+    """
+    if not timed_moves or not isinstance(timed_moves, list):
+        return []
+
+    pacing = GENRE_PACING.get(genre.lower(), DEFAULT_PACING)
+    cycle_len = len(FACE_CYCLE)
+
+    cues = []
+    for i, entry in enumerate(timed_moves):
+        if len(entry) < 4:
+            continue
+        if i % pacing == 0:
+            face_idx = (i // pacing) % cycle_len
+            state_val = float(FACE_CYCLE[face_idx].value)
+            # Use the choreography entry's actual start_time
+            cues.append(("display", 0.0, state_val, entry[3]))
+
+    return cues
