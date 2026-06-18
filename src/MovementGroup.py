@@ -210,12 +210,12 @@ class MovementGroups:
         self.MovementLib.append(dance_scheme)      # append dance
         return self.MovementLib
   
-    def look_rightlower(self):
+    def look_lowerright(self):
         """Set robot look down 20deg and look right 30deg, you can change the deg parameter in this function.
         Returns:
         	Append the look rightlower movement into MovementLib
         """
-        dance_scheme = Movements('look_rightlower')
+        dance_scheme = Movements('look_lowerright')
         dance_all_legs = self.default_stand
         dance_speed = [[0,0,0]]       # speed_x, speed_y, no_use
         dance_attitude = [[0,-20,30]] # roll, pitch, yaw degree
@@ -223,12 +223,12 @@ class MovementGroups:
         self.MovementLib.append(dance_scheme)      # append dance
         return self.MovementLib
   
-    def look_leftlower(self):
+    def look_lowerleft(self):
         """Set robot look down 20deg and look left 30deg, you can change the deg parameter in this function.
         Returns:
         	Append the look leftlower movement into MovementLib
         """
-        dance_scheme = Movements('look_leftlower')
+        dance_scheme = Movements('look_lowerleft')
         dance_all_legs = self.default_stand
         dance_speed = [[0,0,0]]       # speed_x, speed_y, no_use
         dance_attitude = [[0,-20,-30]]# roll, pitch, yaw degree
@@ -458,6 +458,38 @@ class MovementGroups:
             [[-0.06,-0.05,-0.07-modified_ht]],
             [[-0.06, 0.05,-0.07-modified_ht]]
         ]
+        dance_speed = [[0,0,0]]        # speed_x, speed_y, no_use
+        dance_attitude = [[0,0,0]]     # roll, pitch, yaw degree
+        dance_scheme.setTransitionTic(interval_acc)
+        dance_scheme.setInterpolationNumber(interval_uni) 
+        dance_scheme.setAllSequence(dance_all_legs,dance_speed,dance_attitude)
+        self.MovementLib.append(dance_scheme)      # append dance
+        return self.MovementLib
+
+    def step_move (self, ht = 0, time_uni = 1, time_acc = 1):
+        """Let robot descend or ascend a given height
+        Args:
+            ht: the distance you want the robot to ascend or descend 
+                e.g. ht = 0.02 ----> let pupper ascend 0.02m
+            time_acc: how long it takes to ascend or descend (unit: second)
+            time_uni: how long pupper will hold the position after ascending or descending (unit:second)
+        Return:
+            Append the height movement into the MovementLib
+        """
+        if time_uni <= 0:
+            time_uni = self.dt
+        if time_acc <=0:
+            time_acc = self.dt
+        interval_uni = int(time_uni / self.dt)
+        interval_acc = int(time_acc / self.dt)
+        modified_ht = self.cap_limit(self.highcap, -self.lowcap, ht)
+        dance_scheme = Movements('step_move')
+        dance_all_legs = []
+        dance_all_legs.append([[ 0.06,-0.05,-0.07], [ 0.06,-0.05,-0.07],[ 0.06,-0.05,-0.07],])
+        dance_all_legs.append([[ 0.06, 0.05,-0.07], [ 0.06, 0.05,-0.07],[ 0.06, 0.05,-0.07],])
+        dance_all_legs.append([[-0.06,-0.05,-0.07], [-0.06,-0.05,-0.07-modified_ht],[-0.06,-0.05,-0.07],])
+        dance_all_legs.append([[-0.06, 0.05,-0.07], [-0.06, 0.05,-0.07],[-0.06, 0.05,-0.07],])
+            
         dance_speed = [[0,0,0]]        # speed_x, speed_y, no_use
         dance_attitude = [[0,0,0]]     # roll, pitch, yaw degree
         dance_scheme.setTransitionTic(interval_acc)
