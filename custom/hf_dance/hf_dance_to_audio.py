@@ -739,8 +739,9 @@ def cmd_dance(url: str, genre_override: str = None, no_activate: bool = True) ->
     if not timed:
         return {"ok": False, "error": "HF Space did not return timed choreography"}
 
-    genre = beat_info.get("genre", "pop")
-    genre_display = beat_info.get("genre_display", "Pop")
+    # Use the explicit genre override if provided, otherwise fall back to HF Space's guess
+    genre = genre_override if genre_override else beat_info.get("genre", "pop")
+    genre_display = beat_info.get("genre_display", GENRE_DISPLAY_NAMES.get(genre, "Pop"))
 
     # Phase 4: Replace HF Space commands with locally generated choreography
     timed = enrich_choreography(timed, genre, url or title)

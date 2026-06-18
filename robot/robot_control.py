@@ -114,6 +114,14 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
 
     elif command in ("look-upper-left", "look_upperleft", "upper-left", "upperleft"):
         move.head_move(pitch_deg=15, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
+
+    elif command in ("look-lower-left", "look_lowerleft", "lower-left", "lowerleft"):
+        move.head_move(pitch_deg=-15, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
+
+    elif command in ("look-lower-right", "look_lowerright", "lower-right", "lowerright"):
+        move.head_move(pitch_deg=-15, yaw_deg=20, time_uni=duration, time_acc=time_acc)
+
+        
         
     elif command in ("disco1"):
         _n_subs = 2
@@ -139,14 +147,10 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         # move.head_move(pitch_deg=-15, yaw_deg=-20, time_uni=duration, time_acc=time_acc)     
 
     elif command in ("seek"):
-        move.head_move(pitch_deg=0, yaw_deg=30, time_uni=duration, time_acc=time_acc)
+        move.head_move(pitch_deg=-15, yaw_deg=30, time_uni=duration, time_acc=time_acc)
         # move.stop(time=0.1)
-        move.head_move(pitch_deg=0, yaw_deg=-30, time_uni=duration, time_acc=time_acc)
-        # move.stop(time=0.1)
-        # move.head_move(pitch_deg=0, yaw_deg=30, time_uni=duration, time_acc=time_acc)
-        # move.stop(time=0.1)
-        # move.head_move(pitch_deg=0, yaw_deg=-30, time_uni=duration, time_acc=time_acc)
-        # move.stop(time=0.1)
+        move.head_move(pitch_deg=15, yaw_deg=-30, time_uni=duration, time_acc=time_acc)
+        
      
         
 
@@ -167,7 +171,7 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         move.stop(time=0.1)
 
     elif command in ("body-row", "body_row", "roll"):
-        move.body_row(row_deg=angle if angle else 10, time_uni=duration, time_acc=time_acc)
+        move.body_row(row_deg=angle if angle else 20, time_uni=duration, time_acc=time_acc)
 
     # ── Standing / Activation ──
     elif command in ("stop", "idle"):
@@ -250,13 +254,7 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         move.foreleg_lift("left", ht=0.005, time_uni=duration, time_acc=time_acc)
         move.stop(time=0.1)
 
-    elif command in ("front_kick", "rear_up"):
-        # Phase 1: Snap front legs up with max height + pitch back
-        move.front_kick(ht=0.06, pitch_deg=25, time_uni=duration, time_acc=time_acc)
-        # Phase 2: Return to default standing
-        move.front_kick_to_stand(time_uni=duration, time_acc=time_acc)
-        # Phase 3: Settle
-        move.stop(time=0.1)
+    
 
     # ── Dance Moves (10 choreographed sequences) ────────────────────
 
@@ -373,18 +371,26 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         move.stop(time=0.3)
 
 
-    elif command in ("front-kick", "front_kick"):
-        """Both front legs kick up — snap up, hold, return."""
-        # Phase 1: Lower body slightly, lift right front leg
-        move.height_move(ht=-0.01, time_uni=0.3, time_acc=0.2)
-        move.foreleg_lift(leg_index="right", ht=0.06, time_uni=0.4, time_acc=0.15)
+    # elif command in ("front-kick", "front_kick"):
+    #     """Both front legs kick up — snap up, hold, return."""
+    #     # Phase 1: Lower body slightly, lift right front leg
+    #     move.height_move(ht=-0.01, time_uni=0.3, time_acc=0.2)
+    #     move.foreleg_lift(leg_index="right", ht=0.06, time_uni=0.4, time_acc=0.15)
+    #     move.stop(time=0.1)
+    #     # Phase 2: Snap left front leg up too
+    #     move.foreleg_lift(leg_index="left", ht=0.06, time_uni=0.4, time_acc=0.15)
+    #     move.stop(time=0.3)
+    #     # Phase 3: Return to standing
+    #     move.height_move(ht=0.01, time_uni=0.3, time_acc=0.2)
+    #     move.stop(time=0.2)
+
+    elif command in ("front_kick", "rear_up"):
+        # Phase 1: Snap front legs up with max height + pitch back
+        move.front_kick(ht=0.06, pitch_deg=25, time_uni=duration, time_acc=time_acc)
+        # Phase 2: Return to default standing
+        move.front_kick_to_stand(time_uni=duration, time_acc=time_acc)
+        # Phase 3: Settle
         move.stop(time=0.1)
-        # Phase 2: Snap left front leg up too
-        move.foreleg_lift(leg_index="left", ht=0.06, time_uni=0.4, time_acc=0.15)
-        move.stop(time=0.3)
-        # Phase 3: Return to standing
-        move.height_move(ht=0.01, time_uni=0.3, time_acc=0.2)
-        move.stop(time=0.2)
 
     # ── Genre Signatures ────────────────────────────────────────
     elif command == "head_ellipse":
@@ -431,6 +437,10 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         _s.setTurnSequence([[0,0,0]])
         move.MovementLib.append(_s)
 
+    elif command == "step_move":
+        move.step_move (ht=-0.025, time_uni=duration, time_acc=time_acc)
+        # move.stop (time=0.1)
+
     elif command == "twerk":
         """🍑 Twerk — single-pose hold + stop for smooth return."""
         _n_subs = 2
@@ -448,8 +458,20 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         interp_num auto-derived from time_uni inside wiggle_left/right."""
         move.wiggle_left(time_uni=duration, time_acc=time_acc)
         move.wiggle_right(time_uni=duration, time_acc=time_acc)
-        
 
+    elif command == "left_wiggle":
+        """🍑 Multi-pose wiggle — same beat control as butt_shrug.
+        interp_num auto-derived from time_uni inside wiggle_left/right."""
+        move.wiggle_left(time_uni=duration, time_acc=time_acc)
+        # move.wiggle_right(time_uni=duration, time_acc=time_acc)
+
+    elif command == "right_wiggle":
+        """🍑 Multi-pose wiggle — same beat control as butt_shrug.
+        interp_num auto-derived from time_uni inside wiggle_left/right."""
+        # move.wiggle_left(time_uni=duration, time_acc=time_acc)
+        move.wiggle_right(time_uni=duration, time_acc=time_acc)
+        
+    
     elif command == "shoulder_shrug":
         _n_subs = 2
         _sub_tic = max(time_acc / _n_subs, 0.015)
@@ -459,10 +481,30 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
             # move.head_move(pitch_deg=-25, yaw_deg=0, time_uni=duration, time_acc=time_acc)
             move.head_move(pitch_deg=0, yaw_deg=15, time_uni=duration, time_acc=time_acc)
             # move.stop (time=0.1)
-            move.head_move(pitch_deg=0, yaw_deg=15, time_uni=duration, time_acc=time_acc)
+            move.head_move(pitch_deg=0, yaw_deg=-15, time_uni=duration, time_acc=time_acc)
             # move.stop (time=0.1)
             # move.head_move(pitch_deg=0, yaw_deg=-15, time_uni=duration, time_acc=time_acc)
             # move.stop (time=0.1)
+
+    elif command == "left_shoulder_shrug":
+        _n_subs = 2
+        _sub_tic = max(time_acc / _n_subs, 0.015)
+        reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
+        _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
+        for _ in range(1):            
+            move.head_move(pitch_deg=0, yaw_deg=15, time_uni=duration, time_acc=time_acc)
+            
+
+    elif command == "right_shoulder_shrug":
+        _n_subs = 2
+        _sub_tic = max(time_acc / _n_subs, 0.015)
+        reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
+        _sub_hold = duration / (reps * _n_subs) if (reps * _n_subs) > 0 else 0.05
+        for _ in range(1):            
+            move.head_move(pitch_deg=0, yaw_deg=-15, time_uni=duration, time_acc=time_acc)
+        
+
+    
 
     elif command == "butt_shrug": 
         # _n_subs = 2
@@ -478,6 +520,12 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         # move.stop_butt_shrug (time=0.1)
         # move.butt_shrug_trajectory(time_uni=duration, time_acc=time_acc)
     
+    elif command == "left_butt_shrug":
+        move.butt_shrug_left(time_uni=duration, time_acc=time_acc)
+    
+    elif command == "right_butt_shrug":
+        move.butt_shrug_right(time_uni=duration, time_acc=time_acc)
+
         
 
     else:

@@ -451,6 +451,25 @@ class MinipupperOperator:
                                 self._interrupt_requested.set()
                             except Exception:
                                 pass
+                            # Also stop dance/music/cleanup like keyboard "stop" does
+                            try:
+                                import subprocess as _sp
+                                _sp.run([sys.executable, "custom/hf_dance/hf_dance_to_audio.py", "stop"],
+                                    capture_output=True, timeout=10)
+                            except Exception:
+                                pass
+                            try:
+                                _sp.run([sys.executable, "custom/play_audio.py", "stop"],
+                                    capture_output=True, timeout=5)
+                            except Exception:
+                                pass
+                            try:
+                                import glob as _gl, os as _os
+                                for _f in _gl.glob("tasks/pending/*.json") + _gl.glob("tasks/active/*.json"):
+                                    try: _os.remove(_f)
+                                    except: pass
+                            except Exception:
+                                pass
                             # Do not enqueue interrupt phrases as user input
                             continue
                     except Exception:
