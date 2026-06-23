@@ -32,8 +32,10 @@ import signal
 import subprocess
 import sys
 import time
-from local_choreography import enrich_choreography, set_logger
-from dance_face import generate_face_cues, DanceFace
+from local_choreography import enrich_choreography, set_logger, _resolve_genre, _map_angle, GENRE_POOLS
+from dance_face import generate_face_cues, face_cues_from_choreography, DanceFace
+import random
+import hashlib
 
 # -- HF API -----------------------------------------------------------------
 
@@ -190,12 +192,12 @@ def _update_dance_status(phase: str, progress: float, message: str):
 
 # -- HF Beat Detection (via Custom HF Space) --------------------------------
 
-def _hf_detect_beats(wav_path: str, genre: str = None) -> dict:
+def _hf_detect_beats(wav_path: str) -> dict:
     """
-    Analyze WAV file by calling your HF Space for BPM, beat timing, and choreography.
-    Returns dict with bpm, synthetic beats, genre, and choreography moves.
+    Analyze WAV file via HF Space for BPM and beat timing.
+    Returns dict with bpm, duration, and beat_slots (list of {start_time, time_acc, local_bpm}).
     """
-    _log(f"HF beat analysis: {wav_path} (genre={genre})")
+    _log(f"HF beat analysis: {wav_path}")
 
     # Get full song duration from the original WAV (not just the 5s segment)
     full_duration = 180.0
@@ -227,13 +229,10 @@ def _hf_detect_beats(wav_path: str, genre: str = None) -> dict:
 
     # Predict using uploaded file path
     t0 = time.time()
-    # Build Gradio API data array: [audio_file, genre]
-    genre_value = genre if genre else "pop"
     predict_resp = requests.post(
         f"https://{HF_SPACE.replace(chr(47), chr(45))}.hf.space/gradio_api/call/predict",
         json={"data": [
             {"path": uploaded_path, "meta": {"_type": "gradio.FileData"}},
-            genre_value,
             full_duration,
         ]},
         timeout=120,
@@ -278,19 +277,22 @@ GENRE_DISPLAY_NAMES = {
     "classical": "🎵 Classical",
     "pop": "🎤 Pop",
     "jazz": "🎷 Jazz",
-    "electronic": "⚡ Electronic",
     "hiphop": "🎧 Hip-Hop",
-    "chill": "🌊 Chill",
+    "disco": "🕺 Disco",
+    "electronic": "⚡ Electronic",
+    "latin": "💃 Latin",
+    "reggae": "🌴 Reggae",
+    "folk": "🪕 Folk",
 }
 
 def _parse_hf_result(result_text, duration: float) -> dict:
     """
     Parse JSON response from HF Space.
 
-    Expected Space JSON: {bpm, genre, duration_sec, timed_choreography}
-    timed_choreography: [[cmd, duration_sec, angle, start_time_sec], ...]
+    Expected Space JSON: {bpm, duration_sec, beat_slots}
+    beat_slots: [{start_time, time_acc, local_bpm}, ...]
 
-    Returns dict with genre, genre_display, and timed choreography.
+    Returns dict with bpm, duration, and beat_slots.
     """
     text = str(result_text)
 
@@ -298,14 +300,12 @@ def _parse_hf_result(result_text, duration: float) -> dict:
     parsed = {}
     try:
         raw = json.loads(text)
-        # Case 1: raw is a list wrapping a JSON string
         if isinstance(raw, list) and len(raw) > 0:
             inner = raw[0]
             if isinstance(inner, str):
                 parsed = json.loads(inner)
             elif isinstance(inner, dict):
                 parsed = inner
-        # Case 2: raw is a dict
         elif isinstance(raw, dict):
             if "data" in raw:
                 inner = raw["data"]
@@ -324,39 +324,20 @@ def _parse_hf_result(result_text, duration: float) -> dict:
     if not parsed or "error" in parsed:
         return {"error": parsed.get("error", "Could not parse HF Space response")}
 
-    # Extract timed choreography
-    raw_choreo = parsed.get("timed_choreography", [])
-    if not raw_choreo or not isinstance(raw_choreo, list) or len(raw_choreo) < 4:
-        return {"error": "HF Space did not return timed choreography"}
-
-    timed_moves = []
-    for entry in raw_choreo:
-        if len(entry) >= 4:
-            timed_moves.append((
-                str(entry[0]),    # cmd
-                float(entry[1]),  # time_acc
-                entry[2] if entry[2] is not None else None,  # angle
-                float(entry[3]),  # start_time
-            ))
-
-    # Extract genre
-    raw_genre = parsed.get("genre", "pop").lower()
-    valid_genres = ("rock", "classical", "pop", "jazz", "electronic", "hiphop", "chill")
-    genre = raw_genre if raw_genre in valid_genres else "pop"
-    genre_display = GENRE_DISPLAY_NAMES.get(genre, "Pop")
+    # Extract beat slots (timing only, no choreography)
+    beat_slots = parsed.get("beat_slots", [])
+    if not beat_slots or not isinstance(beat_slots, list):
+        return {"error": "HF Space did not return beat_slots"}
 
     bpm = parsed.get("bpm") or parsed.get("tempo", 120)
     total_dur = parsed.get("duration_sec", duration)
 
-    _log(f"HF Space: genre={genre_display}, {len(timed_moves)} timed moves, "
-         f"BPM={bpm}, total={total_dur:.0f}s")
+    _log(f"HF Space: {len(beat_slots)} beat slots, BPM={bpm}, total={total_dur:.0f}s")
 
     return {
-        "genre": genre,
-        "genre_display": genre_display,
-        "timed_choreography": timed_moves,
         "bpm": float(bpm) if bpm else 120,
         "duration": total_dur,
+        "beat_slots": beat_slots,
         "source": "hf_space",
     }
 
@@ -577,7 +558,11 @@ def _detect_genre_from_url(url: str) -> dict:
             "jazz": ["jazz", "blues", "bebop", "swing", "smooth jazz"],
             "electronic": ["electronic", "edm", "techno", "house", "dubstep", "trance", "dance", "remix"],
             "hiphop": ["hip hop", "hip-hop", "rap", "r&b", "rnb", "trap", "drill"],
-            "chill": ["chill", "ambient", "lo-fi", "lofi", "relax", "mellow", "study"],
+            "disco": ["disco", "funk", "groove", "70s", "boogie"],
+            "latin": ["latin", "salsa", "bachata", "reggaeton", "merengue", "cumbia", "samba", "rumba"],
+            "reggae": ["reggae", "ska", "dub", "reggaeton"],
+            "folk": ["folk", "acoustic", "indie", "singer songwriter", "banjo", "mandolin", "bluegrass"],
+            "pop": ["pop", "k-pop", "j-pop", "chart", "mainstream"],
         }
 
         # Score each genre
@@ -641,13 +626,41 @@ def cmd_search(query: str) -> dict:
             })
     if not results:
         return {"ok": False, "error": "No results found."}
-    # Detect genre for top result
+    # Genre is determined by Gemini from song context during the dance step.
+    # No yt-dlp metadata scrape needed - saves ~9s latency.
     if results:
-        genre_info = _detect_genre_from_url(results[0]["url"])
-        results[0]["genre"] = genre_info["genre"]
-        results[0]["genre_display"] = genre_info["genre_display"]
-        _log(f'Top result genre: {genre_info["genre_display"]}')
+        results[0]["genre"] = "unknown"
+        results[0]["genre_display"] = "Unknown"
     return {"ok": True, "results": results, "count": len(results)}
+
+def _generate_choreography_from_slots(beat_slots: list, genre: str, seed: str) -> list:
+    """Convert Space timing slots into genre-appropriate timed moves.
+
+    Each slot becomes one move from the genre pool, preserving the
+    Space's time_acc and start_time. Uses deterministic seed RNG
+    so the same song always gets the same dance.
+
+    Args:
+        beat_slots: list of {start_time, time_acc, local_bpm} from HF Space
+        genre: canonical genre string (e.g. "classical", "rock")
+        seed: deterministic seed (song URL or title)
+
+    Returns:
+        List of (cmd, time_acc, angle, start_time) tuples for enrich_choreography.
+    """
+    canonical_genre = _resolve_genre(genre)
+    pool = GENRE_POOLS.get(canonical_genre, GENRE_POOLS["pop"])
+    seed_int = int(hashlib.sha256(seed.encode()).hexdigest(), 16)
+    rng = random.Random(seed_int)
+
+    timed = []
+    for slot in beat_slots:
+        move = rng.choices(pool["moves"], weights=pool["weights"], k=1)[0]
+        angle = _map_angle(move, slot.get("angle", 0) or 0)
+        timed.append((move, slot["time_acc"], angle, slot["start_time"]))
+
+    _log(f"Local choreography from slots: {len(timed)} moves, genre={canonical_genre}")
+    return timed
 
 def cmd_dance(url: str, genre_override: str = None, no_activate: bool = True) -> dict:
     """
@@ -731,25 +744,27 @@ def cmd_dance(url: str, genre_override: str = None, no_activate: bool = True) ->
             return {"ok": False, "error": f"Conversion failed: {ffmpeg.stderr.strip()[:300]}"}
     _log(f"WAV ready: {wav_path}")
 
-    # Detect beats + genre + choreography via Hugging Face
-    beat_info = _hf_detect_beats(wav_path, genre=genre_override)
+    # Detect beats + timing via Hugging Face (no genre, no choreography)
+    beat_info = _hf_detect_beats(wav_path)
     if "error" in beat_info:
         return beat_info
-    timed = beat_info.get("timed_choreography")
-    if not timed:
-        return {"ok": False, "error": "HF Space did not return timed choreography"}
+    beat_slots = beat_info.get("beat_slots")
+    if not beat_slots:
+        return {"ok": False, "error": "HF Space did not return beat_slots"}
 
-    # Use the explicit genre override if provided, otherwise fall back to HF Space's guess
-    genre = genre_override if genre_override else beat_info.get("genre", "pop")
-    genre_display = beat_info.get("genre_display", GENRE_DISPLAY_NAMES.get(genre, "Pop"))
+    genre = genre_override if genre_override else "pop"
+    genre_display = GENRE_DISPLAY_NAMES.get(genre, f"\U0001f3a4 {genre.capitalize()}")
 
-    # Phase 4: Replace HF Space commands with locally generated choreography
+    # Generate genre-appropriate timed moves from Space timing slots
+    timed = _generate_choreography_from_slots(beat_slots, genre, url or title)
+
+    # Expand compound moves (dip, spin) into atomic sub-moves
     timed = enrich_choreography(timed, genre, url or title)
-    _log(f"HF Space: {len(timed)} timed moves, genre: {genre_display}")
+    _log(f"Final choreography: {len(timed)} moves, genre: {genre_display}")
 
-    # Generate face-display cues synced to BPM and genre
+    # Generate face-display cues from actual choreography timestamps
     duration = beat_info.get("duration", 180.0)
-    face_cues_dance = generate_face_cues(beat_info.get("bpm", 120), duration, genre)
+    face_cues_dance = face_cues_from_choreography(timed, genre)
     _log(f"Face cues: {len(face_cues_dance)} display changes across {duration:.0f}s")
 
     # Save state for background process

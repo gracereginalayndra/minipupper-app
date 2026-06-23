@@ -347,16 +347,28 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
             move.head_move(pitch_deg=-5, yaw_deg=0, time_uni=_sub_hold, time_acc=_sub_tic)
             
 
+    # elif command == "lean":
+    #     """Slow controlled body tilt in one direction, then return."""
+    #     lean_angle = angle if angle else 25
+    #     stages = max(3, int(abs(lean_angle) / 5))
+    #     step = lean_angle / stages
+    #     for s in range(stages, 0, -1):
+    #         move.body_row(row_deg=s * step, time_uni=time_acc, time_acc=0.1)
+    #     move.stop(time=0.1)
+    #     for s in range(1, stages + 1):
+    #         move.body_row(row_deg=-s * step, time_uni=time_acc, time_acc=0.1)
+
     elif command == "lean":
         """Slow controlled body tilt in one direction, then return."""
-        lean_angle = angle if angle else 20
-        stages = max(3, int(abs(lean_angle) / 5))
-        step = lean_angle / stages
-        for s in range(stages, 0, -1):
-            move.body_row(row_deg=s * step, time_uni=time_acc, time_acc=time_acc)
-        move.stop(time=0.4)
-        for s in range(1, stages + 1):
-            move.body_row(row_deg=s * step, time_uni=time_acc, time_acc=time_acc)
+        _n_subs = 2
+        _sub_tic = max(time_acc / _n_subs, 0.015)
+        reps = max(1, int((time_acc + duration) / (time_acc * _n_subs))) if duration > 0 else 1
+        _sub_hold = max(duration / (reps * _n_subs), 0.025) if (reps * _n_subs) > 0 else 0.05
+        for _ in range(reps):            
+            move.body_row(row_deg=20, time_uni=duration, time_acc=time_acc)        
+            move.body_row(row_deg=10, time_uni=duration, time_acc=time_acc)        
+            move.body_row(row_deg=-10, time_uni=duration, time_acc=time_acc)
+            move.body_row(row_deg=-20, time_uni=duration, time_acc=time_acc)
 
     elif command == "flourish":
         """Multi-axis showstopper: look up + rise + spin + sink + tilt + finish."""
