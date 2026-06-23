@@ -36,6 +36,7 @@ from local_choreography import enrich_choreography, set_logger, _resolve_genre, 
 from dance_face import generate_face_cues, face_cues_from_choreography, DanceFace
 import random
 import hashlib
+import threading
 
 # -- HF API -----------------------------------------------------------------
 
@@ -64,6 +65,73 @@ def _log(msg: str):
 
 # Inject logger into local choreography module
 set_logger(_log)
+
+
+# ── Audio Monitor ────────────────────────────────────────────────────────────
+ALSA_STATUS_GLOB = "/proc/asound/card*/pcm*p/sub*/status"
+
+
+def _find_active_pcm():
+    """Check if any ALSA PCM device is in RUNNING state.
+
+    Returns True if active playback detected.
+    """
+    import glob
+    for path in glob.glob(ALSA_STATUS_GLOB):
+        try:
+            with open(path) as f:
+                text = f.read()
+            if "state: RUNNING" in text:
+                return True
+        except (OSError, IOError):
+            continue
+    return False
+    return False
+
+
+def _audio_monitor(player, stop_flag_path, poll_interval=1.0, debounce=2,
+                     startup_grace=5.0):
+    """Background thread: delete stop_flag when audio playback ends.
+
+    Checks two conditions:
+    1. ffplay process exited (player.poll())
+    2. ALSA PCM no longer RUNNING (with debounce to avoid false positives)
+
+    Skips ALSA checks during startup_grace window to allow ffplay
+    to open the PCM device before monitoring begins.
+    """
+    start_time = time.time()
+    misses = 0
+    while os.path.exists(stop_flag_path):
+        time.sleep(poll_interval)
+        elapsed = time.time() - start_time
+
+        # Condition 1: ffplay process exited (always checked)
+        if player.poll() is not None:
+            _log("Audio monitor: ffplay process ended")
+            break
+
+        # Skip ALSA checks during startup grace period
+        if elapsed < startup_grace:
+            misses = 0
+            continue
+
+        # Condition 2: ALSA not playing
+        if not _find_active_pcm():
+            misses += 1
+            if misses >= debounce:
+                _log(f"Audio monitor: ALSA silent for {debounce} checks — stopping dance")
+                break
+        else:
+            misses = 0
+
+    # Signal dance to stop by removing the active flag
+    try:
+        os.remove(stop_flag_path)
+    except OSError:
+        pass
+
+
 # -- PID Tracking ------------------------------------------------------------
 
 def _find_dance_pid():
@@ -419,6 +487,16 @@ def _choreography_loop(build_movement, run_movement,
     with open(AUDIO_PID_FILE, "w") as f:
         f.write(str(player.pid))
     _log(f"Audio player PID: {player.pid}")
+
+    # Start audio monitor thread
+    monitor = threading.Thread(
+        target=_audio_monitor,
+        args=(player, DANCE_ACTIVE_FLAG),
+        daemon=True,
+        name="DanceAudioMonitor"
+    )
+    monitor.start()
+    _log("Audio monitor started")
 
     # Execute timed moves
 
