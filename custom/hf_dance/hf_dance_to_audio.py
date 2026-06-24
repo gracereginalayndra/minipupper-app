@@ -425,6 +425,29 @@ def _activate_robot(build_movement, run_movement):
     run_movement(lib, timeout=5.0)
     _log("Robot activated.")
 
+LEAN_IMG_NORMAL = "dog_tilt2.webp"
+LEAN_IMG_INVERTED = "dog_tilt2inv.webp"
+
+
+def generate_lean_move_cues(timed_choreography: list) -> list:
+    """Generate image cues synced to actual body_row angle from choreography.
+
+    body_row angle > 0 → inverted image, angle < 0 → normal image.
+    Consecutive duplicates are skipped to avoid LCD refresh flicker.
+    Lean commands are pre-expanded to body_row before reaching this function.
+    Returns list of ("image", 0.0, filename, start_time) tuples.
+    """
+    cues = []
+    last_img = None
+    for cmd, duration, angle, start_time in timed_choreography:
+        if cmd in ("body-row", "body_row"):
+            img = LEAN_IMG_INVERTED if angle > 0 else LEAN_IMG_NORMAL
+            if img != last_img:
+                cues.append(("image", 0.0, img, start_time))
+                last_img = img
+    return cues
+
+
 def _choreography_loop(build_movement, run_movement,
                        beat_info: dict, timed_choreography: list,
                        wav_file: str, title: str,
@@ -451,6 +474,20 @@ def _choreography_loop(build_movement, run_movement,
 
     # Pre-sort moves so we can calculate timing before audio starts
     sorted_moves = sorted(timed_choreography, key=lambda m: m[3])
+
+    # ── Pre-expand "lean" commands into body_row sub-moves ──
+    # Both movement builder and cue generator read the actual angle.
+    expanded_moves = []
+    for cmd, time_acc, angle, start_time in sorted_moves:
+        if cmd == "lean":
+            sub_angles = [20, 10, -10, -20]
+            sub_dur = max(time_acc / 4, 0.05)
+            for i, sa in enumerate(sub_angles):
+                expanded_moves.append(("body_row", sub_dur, sa, start_time + i * sub_dur))
+        else:
+            expanded_moves.append((cmd, time_acc, angle, start_time))
+    sorted_moves = expanded_moves
+
     if sorted_moves:
         first_time_acc = sorted_moves[0][1]
         # Defer audio so robot reaches first pose before first beat
@@ -459,12 +496,21 @@ def _choreography_loop(build_movement, run_movement,
         time.sleep(first_time_acc)
 
     # Start face display thread (if DanceFace provided)
-    if dance_face and face_cues:
-        try:
-            dance_face.start(face_cues, audio_delay=0.0, stop_flag_path=DANCE_ACTIVE_FLAG)
-            _log(f"Face display thread started: {len(face_cues)} cues")
-        except Exception as e:
-            _log(f"Face display start failed (non-fatal): {e}")
+    # If genre is "lean", use alternating tilt/inverted-tilt image cycle
+    if dance_face:
+        if genre == "lean":
+            lean_cues = generate_lean_move_cues(sorted_moves)
+            try:
+                dance_face.start(lean_cues, audio_delay=0.0, stop_flag_path=DANCE_ACTIVE_FLAG)
+                _log(f"Lean image cues started: {len(lean_cues)} cues (genre=lean)")
+            except Exception as e:
+                _log(f"Lean image start failed (non-fatal): {e}")
+        elif face_cues:
+            try:
+                dance_face.start(face_cues, audio_delay=0.0, stop_flag_path=DANCE_ACTIVE_FLAG)
+                _log(f"Face display thread started: {len(face_cues)} cues")
+            except Exception as e:
+                _log(f"Face display start failed (non-fatal): {e}")
 
 
     # Start audio playback
@@ -1146,6 +1192,30 @@ def cmd_status() -> dict:
 
 # -- CLI ---------------------------------------------------------------------
 
+
+def cmd_process_task(task_file: str) -> dict:
+    """Read a task JSON file and execute the dance with exact params.
+
+    This bypasses any LLM-side genre re-classification — reads params.genre
+    directly from the task file and passes it as genre_override to cmd_dance().
+    """
+    try:
+        with open(task_file) as f:
+            task = json.load(f)
+    except (json.JSONDecodeError, OSError, IOError) as e:
+        return {"ok": False, "error": f"Cannot read task file: {e}"}
+
+    url = task.get("params", {}).get("url", "")
+    if not url:
+        return {"ok": False, "error": "No url in task params"}
+
+    genre = task.get("params", {}).get("genre")
+    no_activate = bool(task.get("params", {}).get("no_activate", False))
+
+    _log(f"Processing task: url={url}, genre_override={genre}, no_activate={no_activate}")
+    return cmd_dance(url, genre_override=genre, no_activate=no_activate)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Mini Pupper Dance Machine (HF-powered)")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -1165,6 +1235,9 @@ def main():
 
     subparsers.add_parser("stop", help="Stop dancing")
 
+    p_task = subparsers.add_parser("process-task", help="Process a task JSON file directly (bypasses LLM genre guesswork)")
+    p_task.add_argument("task_file", help="Path to task JSON file")
+
     subparsers.add_parser("status", help="Check dance status")
 
     args = parser.parse_args()
@@ -1173,6 +1246,8 @@ def main():
         result = cmd_search(" ".join(args.query))
     elif args.command == "dance":
         result = cmd_dance(args.url, genre_override=args.genre, no_activate=args.no_activate)
+    elif args.command == "process-task":
+        result = cmd_process_task(args.task_file)
     elif args.command == "execute":
         result = cmd_execute(args.state_file)
     elif args.command == "stop":

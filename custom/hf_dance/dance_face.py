@@ -20,6 +20,31 @@ import threading
 from enum import Enum
 from MangDang.mini_pupper.display import Display
 
+# Lean choreo image directory (relative to this file)
+LEAN_IMG_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def _show_on_lcd(img_path: str):
+    """Display a static image on the ST7789 LCD, resized and centered."""
+    from PIL import Image
+    try:
+        d = Display()
+        w, h = d.disp.width, d.disp.height
+        img = Image.open(img_path)
+        if img.mode != "RGB":
+            img = img.convert("RGB")
+        thumb = img.copy()
+        thumb.thumbnail((w, h), Image.LANCZOS)
+        thumb = thumb.transpose(Image.FLIP_LEFT_RIGHT)
+        bg = Image.new("RGB", (w, h), (0, 0, 0))
+        offset = ((w - thumb.width) // 2, (h - thumb.height) // 2)
+        bg.paste(thumb, offset)
+        tmp = "/tmp/minipupper_lean_face.png"
+        bg.save(tmp)
+        d.show_image(tmp)
+    except Exception:
+        pass
+
 
 class BehaviorState(Enum):
     DEACTIVATED = -1
@@ -169,20 +194,25 @@ class DanceFace:
     def _run(self, cues: list, audio_delay: float, stop_flag_path: str) -> None:
         t0 = time.time()
 
-        # Normalise to (state_value, start_time) pairs
+        # Normalise to (cmd_or_val, start_time) pairs
+        # Supports face cues (cmd="display", angle=state_val) and
+        # image cues (cmd="image", angle=image_path)
         pairs = []
         for c in cues:
             if len(c) == 2:
                 pairs.append((c[0], c[1]))
             elif len(c) >= 4:
-                pairs.append((int(c[2]), c[3]))
+                if isinstance(c[0], str) and c[0] == "image":
+                    pairs.append((c[2], c[3]))  # (image_path, start_time)
+                else:
+                    pairs.append((int(c[2]), c[3]))  # (state_val, start_time)
             else:
                 continue
 
         if not pairs:
             return
 
-        for state_val, cue_time in pairs:
+        for val_or_path, cue_time in pairs:
             if self._stop.is_set() or not os.path.exists(stop_flag_path):
                 break
 
@@ -199,7 +229,13 @@ class DanceFace:
                 break
 
             try:
-                self.disp.show_state(_resolve_state(state_val))
+                if isinstance(val_or_path, int):
+                    self.disp.show_state(_resolve_state(val_or_path))
+                else:
+                    # Image cue: val_or_path is a file path (relative or absolute)
+                    full_path = os.path.join(LEAN_IMG_DIR, val_or_path) if not os.path.isabs(val_or_path) else val_or_path
+                    if os.path.exists(full_path):
+                        _show_on_lcd(full_path)
             except Exception:
                 pass
 

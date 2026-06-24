@@ -147,9 +147,9 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         # move.head_move(pitch_deg=-15, yaw_deg=-20, time_uni=duration, time_acc=time_acc)     
 
     elif command in ("seek"):
-        move.head_move(pitch_deg=-15, yaw_deg=30, time_uni=duration, time_acc=time_acc)
+        move.head_move(pitch_deg=-8, yaw_deg=30, time_uni=duration, time_acc=time_acc)
         # move.stop(time=0.1)
-        move.head_move(pitch_deg=15, yaw_deg=-30, time_uni=duration, time_acc=time_acc)
+        move.head_move(pitch_deg=8, yaw_deg=-30, time_uni=duration, time_acc=time_acc)
         
      
         
@@ -450,7 +450,7 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         move.MovementLib.append(_s)
 
     elif command == "step_move":
-        move.step_move (ht=-0.025, time_uni=duration, time_acc=time_acc)
+        move.step_move (ht=-0.025, time_uni=duration/2, time_acc=0.05)
         # move.stop (time=0.1)
 
     elif command == "twerk":

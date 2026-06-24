@@ -46,11 +46,11 @@ GENRE_POOLS = {
         # Vibe: graceful bowing, elegant swagger, ballet-like leg lifts
         # Signature: greet (bow), swagger (graceful sway)
         "moves": [
-            "greet", "squat", "body_ellipse",
+            "greet", "squat", "body_ellipse", "lean"
             
         ],
         "weights": [
-            0.4, 0.4, 0.2            
+            0.2, 0.3, 0.2, 0.3            
         ],
     },
     "pop": {
@@ -60,14 +60,37 @@ GENRE_POOLS = {
             # "backleg_lift", "bounce", "body_ellipse"
             # "look_up", "look_down", "body_row", "backleg_lift", "twerk", "butt_shrug",
             # "butt_shrug", "wiggle", "swagger"
-            "twerk", "swagger", "wiggle", "step_move"
+            # "twerk", "swagger", "wiggle", "step_move"
+            # "lean"
+            "step_move"
         ],
         "weights": [
             # 0.14, 0.11, 0.10, 0.09,
             # 0.09, 0.08, 0.08, 0.07, 0.06,
             # 0.06, 0.05, 0.07, 
             # 0.5, 0.5, # All weight on wiggle for testing
-            0.18, 0.3, 0.3, 0.22
+           # 0.18, 0.3, 0.3, 0.22
+           1
+            
+        ],
+    },
+    "lean": {
+        # Vibe: energetic, varied, body waves, twerks, sassy
+        # Signature: sig:pop (body wave), twerk, wiggle
+        "moves": [
+            # "backleg_lift", "bounce", "body_ellipse"
+            # "look_up", "look_down", "body_row", "backleg_lift", "twerk", "butt_shrug",
+            # "butt_shrug", "wiggle", "swagger"
+            # "twerk", "swagger", "wiggle", "step_move"
+            "lean"
+        ],
+        "weights": [
+            # 0.14, 0.11, 0.10, 0.09,
+            # 0.09, 0.08, 0.08, 0.07, 0.06,
+            # 0.06, 0.05, 0.07, 
+            # 0.5, 0.5, # All weight on wiggle for testing
+           # 0.18, 0.3, 0.3, 0.22
+           1
             
         ],
     },
