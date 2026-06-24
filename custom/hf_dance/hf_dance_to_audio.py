@@ -430,21 +430,24 @@ LEAN_IMG_INVERTED = "dog_tilt2inv.webp"
 
 
 def generate_lean_move_cues(timed_choreography: list) -> list:
-    """Generate image cues synced to actual body_row angle from choreography.
+    """Generate image cues for lean choreography.
 
-    body_row angle > 0 → inverted image, angle < 0 → normal image.
-    Consecutive duplicates are skipped to avoid LCD refresh flicker.
-    Lean commands are pre-expanded to body_row before reaching this function.
+    Each lean command corresponds to one body_row sub-move internally.
+    4 consecutive leans map to: +20, +10 (inverted), -10, -20 (normal).
+    Show inverted for first 2, normal for next 2, repeat.
+    Skip consecutive dupes to avoid LCD flicker.
     Returns list of ("image", 0.0, filename, start_time) tuples.
     """
     cues = []
+    lean_count = 0
     last_img = None
-    for cmd, duration, angle, start_time in timed_choreography:
-        if cmd in ("body-row", "body_row"):
-            img = LEAN_IMG_INVERTED if angle > 0 else LEAN_IMG_NORMAL
+    for cmd, _, angle, start_time in timed_choreography:
+        if cmd == "lean":
+            img = LEAN_IMG_NORMAL if (lean_count // 2) % 2 == 0 else LEAN_IMG_INVERTED
             if img != last_img:
                 cues.append(("image", 0.0, img, start_time))
                 last_img = img
+            lean_count += 1
     return cues
 
 
@@ -475,18 +478,18 @@ def _choreography_loop(build_movement, run_movement,
     # Pre-sort moves so we can calculate timing before audio starts
     sorted_moves = sorted(timed_choreography, key=lambda m: m[3])
 
-    # ── Pre-expand "lean" commands into body_row sub-moves ──
-    # Both movement builder and cue generator read the actual angle.
-    expanded_moves = []
-    for cmd, time_acc, angle, start_time in sorted_moves:
-        if cmd == "lean":
-            sub_angles = [20, 10, -10, -20]
-            sub_dur = max(time_acc / 4, 0.05)
-            for i, sa in enumerate(sub_angles):
-                expanded_moves.append(("body_row", sub_dur, sa, start_time + i * sub_dur))
-        else:
-            expanded_moves.append((cmd, time_acc, angle, start_time))
-    sorted_moves = expanded_moves
+    # # ── Pre-expand "lean" commands into body_row sub-moves ──
+    # # Both movement builder and cue generator read the actual angle.
+    # expanded_moves = []
+    # for cmd, time_acc, angle, start_time in sorted_moves:
+    #     if cmd == "lean":
+    #         sub_angles = [20, 10, -10, -20]
+    #         sub_dur = max(time_acc, 0.05)
+    #         for i, sa in enumerate(sub_angles):
+    #             expanded_moves.append(("body_row", sub_dur, sa, start_time + i * sub_dur))
+    #     else:
+    #         expanded_moves.append((cmd, time_acc, angle, start_time))
+    # sorted_moves = expanded_moves
 
     if sorted_moves:
         first_time_acc = sorted_moves[0][1]
