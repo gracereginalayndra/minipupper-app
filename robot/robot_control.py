@@ -551,7 +551,8 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
 # ═══════════════════════════════════════════════════════════════════
 
 def run_movement(movement_lib, timeout=30.0, initial_state=None,
-             stop_flag_path=None, progress_callback=None):
+             stop_flag_path=None, progress_callback=None,
+             tilt_state=None):
     """
     Execute a MovementLib directly on the robot hardware.
 
@@ -636,6 +637,8 @@ def run_movement(movement_lib, timeout=30.0, initial_state=None,
         command.legslocation = movement_ctl.getMovemenLegsLocation()
         command.horizontal_velocity = movement_ctl.getMovemenSpeed()
         command.roll = movement_ctl.attitude_now[0]
+        if tilt_state is not None:
+            tilt_state.roll_deg = float(movement_ctl.attitude_now[0])
         command.pitch = movement_ctl.attitude_now[1]
         command.yaw = movement_ctl.attitude_now[2]
         command.yaw_rate = movement_ctl.getMovemenTurn()

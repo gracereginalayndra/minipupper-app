@@ -33,7 +33,7 @@ import subprocess
 import sys
 import time
 from local_choreography import enrich_choreography, set_logger, _resolve_genre, _map_angle, GENRE_POOLS
-from dance_face import generate_face_cues, face_cues_from_choreography, DanceFace
+from dance_face import generate_face_cues, face_cues_from_choreography, DanceFace, TiltState, tilt_display_poller
 import random
 import hashlib
 import threading
@@ -440,14 +440,17 @@ def generate_lean_move_cues(timed_choreography: list) -> list:
     """
     cues = []
     lean_count = 0
-    last_img = None
+    last_img = LEAN_IMG_INVERTED
     for cmd, _, angle, start_time in timed_choreography:
-        if cmd == "lean":
+        if cmd == "lean":            
             img = LEAN_IMG_NORMAL if (lean_count // 2) % 2 == 0 else LEAN_IMG_INVERTED
-            if img != last_img:
+            if img == last_img:
+                lean_count += 1
+                continue
+            else:
                 cues.append(("image", 0.0, img, start_time))
                 last_img = img
-            lean_count += 1
+                lean_count += 1
     return cues
 
 
@@ -500,14 +503,17 @@ def _choreography_loop(build_movement, run_movement,
 
     # Start face display thread (if DanceFace provided)
     # If genre is "lean", use alternating tilt/inverted-tilt image cycle
+    tilt_state = None
     if dance_face:
         if genre == "lean":
-            lean_cues = generate_lean_move_cues(sorted_moves)
-            try:
-                dance_face.start(lean_cues, audio_delay=0.0, stop_flag_path=DANCE_ACTIVE_FLAG)
-                _log(f"Lean image cues started: {len(lean_cues)} cues (genre=lean)")
-            except Exception as e:
-                _log(f"Lean image start failed (non-fatal): {e}")
+            tilt_state = TiltState()
+            tilt_thread = threading.Thread(
+                target=tilt_display_poller,
+                args=(tilt_state, DANCE_ACTIVE_FLAG),
+                daemon=True
+            )
+            tilt_thread.start()
+            _log("Tilt display poller started (genre=lean)")
         elif face_cues:
             try:
                 dance_face.start(face_cues, audio_delay=0.0, stop_flag_path=DANCE_ACTIVE_FLAG)
@@ -625,6 +631,7 @@ def _choreography_loop(build_movement, run_movement,
         initial_state=None,
         stop_flag_path=DANCE_ACTIVE_FLAG,
         progress_callback=_progress,
+        tilt_state=tilt_state,
     )
 
     _log(f"Dance {'completed' if ok else 'stopped'} ({moves_built} moves)")

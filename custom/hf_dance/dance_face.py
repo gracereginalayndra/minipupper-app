@@ -46,6 +46,69 @@ def _show_on_lcd(img_path: str):
         pass
 
 
+
+class TiltState:
+    """Thread-safe shared roll angle — written by control loop, read by display thread."""
+    def __init__(self):
+        self.roll_deg = 0.0
+
+
+LEAN_IMG_NORMAL = "dog_tilt2.webp"
+LEAN_IMG_INVERTED = "dog_tilt2inv.webp"
+
+
+def tilt_display_poller(tilt_state, stop_flag_path):
+    """Poll tilt_state roll and update LCD on sign change.
+
+    Pre-processes both images once at startup (resize, flip, cache as PIL Image).
+    Reuses a single Display() — no re-init, no file I/O per frame.
+    Polls at 12 Hz for tighter tracking.
+    """
+    from PIL import Image
+    d = Display()
+    w, h = d.disp.width, d.disp.height
+
+    inv_img = None
+    norm_img = None
+    for path, target in [
+        (os.path.join(LEAN_IMG_DIR, LEAN_IMG_INVERTED), "inv"),
+        (os.path.join(LEAN_IMG_DIR, LEAN_IMG_NORMAL), "norm"),
+    ]:
+        if not os.path.exists(path):
+            continue
+        img = Image.open(path)
+        if img.mode != "RGB":
+            img = img.convert("RGB")
+        thumb = img.copy()
+        thumb.thumbnail((w, h), Image.LANCZOS)
+        thumb = thumb.transpose(Image.FLIP_LEFT_RIGHT)
+        bg = Image.new("RGB", (w, h), (0, 0, 0))
+        offset = ((w - thumb.width) // 2, (h - thumb.height) // 2)
+        bg.paste(thumb, offset)
+        if target == "inv":
+            inv_img = bg
+        else:
+            norm_img = bg
+
+    if inv_img is None or norm_img is None:
+        return
+
+    last_sign = 0
+    while os.path.exists(stop_flag_path):
+        roll = tilt_state.roll_deg
+        sign = 1 if roll > 3 else (-1 if roll < -3 else 0)
+        if sign != 0 and sign != last_sign:
+            img = inv_img if sign < 0 else norm_img
+            try:
+                d.disp.display(img)  # direct SPI, no file I/O
+            except Exception:
+                pass
+            last_sign = sign
+        time.sleep(0.08)
+
+
+
+
 class BehaviorState(Enum):
     DEACTIVATED = -1
     REST = 0
