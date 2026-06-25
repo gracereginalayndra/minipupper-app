@@ -450,7 +450,7 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
         move.MovementLib.append(_s)
 
     elif command == "step_move":
-        move.step_move (ht=-0.025, time_uni=duration/2, time_acc=0.05)
+        move.step_move (ht=-0.025, time_uni=duration/2, time_acc=0.015)
         # move.stop (time=0.1)
 
     elif command == "twerk":
