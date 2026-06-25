@@ -85,10 +85,60 @@ librosa
 numpy
 ```
 
-### HF Space Deployment
+### HF Space (Beat Analysis Backend)
+
+The beat analysis runs on a Hugging Face Space — **not on the Pi**. You have two options:
+
+**Option A — Use the existing public Space (no setup required):**
+
+The code defaults to `Minipupper/Minipupper-Dance-Rhythm-Analysis`, a public Gradio Space. No token, no API key needed. The Pi communicates via a simple 3-step HTTP flow:
+
+```python
+import requests
+
+# Step 1: Upload WAV file to Space
+with open("/path/to/song.wav", "rb") as f:
+    resp = requests.post(
+        "https://Minipupper-Minipupper-Dance-Rhythm-Analysis.hf.space/gradio_api/upload",
+        files={"files": ("audio.wav", f, "audio/wav")},
+        timeout=120,
+    )
+uploaded_path = resp.json()[0]  # e.g., "/tmp/gradio/abc123.wav"
+
+# Step 2: Trigger prediction (returns event_id for polling)
+resp = requests.post(
+    "https://Minipupper-Minipupper-Dance-Rhythm-Analysis.hf.space/gradio_api/call/predict",
+    json={"data": [
+        {"path": uploaded_path, "meta": {"_type": "gradio.FileData"}},
+        180.0,  # song duration in seconds
+    ]},
+    timeout=120,
+)
+event_id = resp.json()["event_id"]
+
+# Step 3: Poll for result via SSE stream
+resp = requests.get(
+    f"https://Minipupper-Minipupper-Dance-Rhythm-Analysis.hf.space/gradio_api/call/predict/{event_id}",
+    headers={"Accept": "text/event-stream"},
+    stream=True,
+)
+for line in resp.iter_lines(decode_unicode=True):
+    if line and line.startswith("data:"):
+        raw = line[5:].strip()
+        if raw and raw != "null":
+            result_json = raw  # ← beat_slots payload
+            break
+```
+
+The Space is free to use and always accessible as long as it's running on Hugging Face's infrastructure.
+
+**Option B — Deploy your own Space:**
 1. Deploy `space_app.py` as a Gradio app to Hugging Face Spaces
-2. Name it (e.g., `Minipupper/Minipupper-Dance-Rhythm-Analysis`)
-3. Set env var `HF_DANCE_SPACE` on the Pi to your Space name
+2. Set the `HF_DANCE_SPACE` env var on the Pi to your Space name:
+   ```bash
+   export HF_DANCE_SPACE="YourUserName/YourSpaceName"
+   ```
+3. The same 3-step HTTP flow works identically — just the hostname changes.
 
 ### YouTube Authentication
 yt-dlp needs cookies to download some YouTube videos:
