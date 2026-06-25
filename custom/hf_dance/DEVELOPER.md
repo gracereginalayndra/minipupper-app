@@ -189,25 +189,70 @@ When either condition triggers: removes the active flag → `_choreography_loop`
 
 ### Add a New Atomic Move
 
-1. Make sure the move command name is handled by the robot's movement API (UDP joystick or `move_api.py`)
-2. Register in `ANGLE_MOVES` in `local_choreography.py`:
+Adding a new atomic move requires changes in **two layers**:
+
+**Layer 1 — Robot-side implementation** in `~/minipupper-app/robot/robot_control.py`'s `_build_movement()` function (or directly in `StanfordQuadruped/src/MovementGroups.py` / `MovementScheme.py` for more complex moves).
+
+Add an `elif` branch:
 ```python
-"my-move": {"type": "roll", "default": 10},
+elif command in ("my-move", "my_move"):
+    move.head_move(pitch_deg=10, yaw_deg=0,
+                   time_uni=duration, time_acc=time_acc)
 ```
-3. Add to any genre pool's `moves` list with appropriate weight
+The `time_acc` (transition time) and `time_uni` (hold time) parameters control execution timing — see compound moves below for the critical nuance.
+
+**Layer 2 — Choreography routing** in `local_choreography.py`:
+1. Register in `ANGLE_MOVES` so the angle mapper knows how to handle it:
+```python
+"my-move": {"type": "pitch", "default": 10},
+```
+2. Add to any genre pool's `moves` list with an appropriate weight.
+
+**Important:** The move command string must match exactly between `_build_movement()` and `local_choreography.py`.
 
 ### Add a New Compound Move
 
-Add to `COMPOUND_EXPANSIONS` in `local_choreography.py`:
+Same two-layer approach as atomic moves:
+
+**Layer 1 — Robot-side** in `robot_control.py`'s `_build_movement()`:
 ```python
-"my-combo": [
-    ("look-up", 20),
-    ("rotate_cw", 90),
-    ("swagger", 10),
-    ("stop", 0),
-]
+elif command in ("my-combo", "my_combo"):
+    move.head_move(pitch_deg=15, yaw_deg=0, time_uni=..., time_acc=...)
+    move.body_row(row_deg=10, time_uni=..., time_acc=...)
+    move.stop(time=0.2)
 ```
-The system automatically shifts subsequent entries right by (N−1) slots.
+
+**Layer 2 — Choreography** in `local_choreography.py`, register in `COMPOUND_EXPANSIONS` for angle routing.
+
+**⚠️ Critical timing nuance (`time_uni` vs `time_acc`):**
+
+The `time_uni` (hold time) and `time_acc` (transition time) parameters control whether a compound spans multiple beats or fits within one:
+
+| Pattern | `time_uni` | Effect |
+|---------|-----------|--------|
+| **Span N beats** | `time_uni = duration` (the slot's full duration) | Each sub-move gets one full beat. A 3-part compound takes 3 beats. |
+| **Fit in 1 beat** | `time_uni = _sub_hold` where `_sub_hold = duration / n_subs` | All sub-moves packed into 1 beat, each getting 1/N of the beat. |
+
+**Example — Span N beats (`disco2`):**
+```python
+move.head_move(pitch_deg=15, yaw_deg=20, time_uni=duration, time_acc=time_acc)
+move.head_move(pitch_deg=-15, yaw_deg=-20, time_uni=duration, time_acc=time_acc)
+```
+Takes 2 beats total. Good for slow, dramatic compounds.
+
+**Example — Fit in 1 beat (`headbang`):**
+```python
+_n_subs = 2
+_sub_tic = max(time_acc / _n_subs, 0.015)
+reps = max(1, int((time_acc + duration) / (time_acc * _n_subs)))
+_sub_hold = duration / (reps * _n_subs)
+for _ in range(reps):
+    move.head_move(pitch_deg=15, yaw_deg=0, time_uni=_sub_hold, time_acc=_sub_tic)
+    move.head_move(pitch_deg=-15, yaw_deg=0, time_uni=_sub_hold, time_acc=_sub_tic)
+```
+Both head bobs fit in 1 beat. `reps` lets you repeat the pattern within the slot.
+
+**Note on `COMPOUND_EXPANSIONS` vs robot-side compounds:** `COMPOUND_EXPANSIONS` in `local_choreography.py` handles *which* atomic commands get called and their default angles — but the actual `time_uni`/`time_acc` logic lives in `robot_control.py`'s `_build_movement()`. Both files must be updated together for a new compound move to work correctly.
 
 ### Add LCD Face Art
 
