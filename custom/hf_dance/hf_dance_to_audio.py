@@ -213,7 +213,7 @@ def _set_music_active(active: bool):
         except OSError:
             pass
 
-def _set_volume(pct: str = "70%"):
+def _set_volume(pct: str = "90%"):
     """Set speaker volume via shared audio_util (auto-detects card)."""
     try:
         sys.path.insert(0, "/home/ubuntu/minipupper-app")
@@ -425,32 +425,30 @@ def _activate_robot(build_movement, run_movement):
     run_movement(lib, timeout=5.0)
     _log("Robot activated.")
 
-LEAN_IMG_NORMAL = "dog_tilt2.webp"
-LEAN_IMG_INVERTED = "dog_tilt2inv.webp"
-
-
 def generate_lean_move_cues(timed_choreography: list) -> list:
-    """Generate image cues for lean choreography.
+    """Generate rotation-angle image cues for lean choreography.
 
-    Each lean command corresponds to one body_row sub-move internally.
-    4 consecutive leans map to: +20, +10 (inverted), -10, -20 (normal).
-    Show inverted for first 2, normal for next 2, repeat.
-    Skip consecutive dupes to avoid LCD flicker.
-    Returns list of ("image", 0.0, filename, start_time) tuples.
+    Each 'lean' choreography command maps to 4 body_row sub-moves at
+    angles +20, +10, -10, -20 degrees. Generates a rotation cue for
+    each sub-move so the puppy image smoothly follows the robot's lean.
+
+    Returns list of ("image", 0.0, {"path": filename, "angle": deg}, start_time) tuples.
+
+    Note: Currently superseded by tilt_display_poller() which provides
+    real-time rotation from the actual robot attitude. Kept for reference
+    and future scheduled-cue use.
     """
+    # The 4 sub-move angles per one "lean" command
+    LEAN_ANGLES = [20, 10, -10, -20]
     cues = []
-    lean_count = 0
-    last_img = LEAN_IMG_INVERTED
     for cmd, _, angle, start_time in timed_choreography:
-        if cmd == "lean":            
-            img = LEAN_IMG_NORMAL if (lean_count // 2) % 2 == 0 else LEAN_IMG_INVERTED
-            if img == last_img:
-                lean_count += 1
-                continue
-            else:
-                cues.append(("image", 0.0, img, start_time))
-                last_img = img
-                lean_count += 1
+        if cmd == "lean":
+            # Emit one rotation cue per sub-move at the command's start_time
+            # (sub-moves are sequential, so they inherit the parent time)
+            for i, lean_angle in enumerate(LEAN_ANGLES):
+                cues.append(("image", 0.0,
+                             {"path": "dog_straight face-bgrmv.png", "angle": lean_angle},
+                             start_time))
     return cues
 
 
@@ -475,7 +473,7 @@ def _choreography_loop(build_movement, run_movement,
         pass
 
     # Set volume
-    _set_volume("70%")
+    _set_volume("90%")
     _set_music_active(True)
 
     # Pre-sort moves so we can calculate timing before audio starts
@@ -535,7 +533,7 @@ def _choreography_loop(build_movement, run_movement,
         )
     player = subprocess.Popen(
         ["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet",
-         "-af", "volume=0.70", wav_file],
+         "-af", "volume=0.90", wav_file],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         start_new_session=True,
     )
