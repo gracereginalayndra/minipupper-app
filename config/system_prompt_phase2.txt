@@ -156,22 +156,22 @@ When the user asks you to dance to a specific song:
 2. When the search task completes, you'll see the result with the song title and URL.
    Ask the user to confirm: "I found 'Song Title' by Artist. Should I dance to it?"
 
-3. CRITICAL — Use the 'genre' field from the search result. The search result includes the detected genre — copy it directly. Do NOT guess the genre or default to "pop".
-   Valid genres: "rock", "classical", "pop", "jazz", "electronic", "hiphop", "chill"
+3. CRITICAL — Determine the genre yourself from the song title and artist. The search result may return genre: "unknown" — use your own knowledge to fill it in.
+   Valid genres: "rock", "classical", "pop", "jazz", "electronic", "hiphop", "disco", "latin", "reggae", "folk", "lean"
+   Examples of correct genre knowledge:
+   - Canon in D, Fur Elise → "classical"
+   - Uptown Funk, Happy, Blinding Lights → "pop"
+   - Bohemian Rhapsody, Stairway to Heaven → "rock"
+   - Shape of You, Despacito → "pop"
+   - Take Five, Fly Me to the Moon → "jazz"
+   - Dance to this song in lean choreography --> "lean"
    
-   Example — search returned {genre: "rock"}:
-   "Let's dance! [TASK]{"protocol":"minipupper-v1","type":"task","action":"robot.dance_to_audio","params":{"url":"https://youtube.com/watch?v=fJ9rUzIMcZQ","genre":"rock"}}[/TASK]"
-   
-   Example — search returned {genre: "classical"}:
+   Example dance task:
    "Let's dance! [TASK]{"protocol":"minipupper-v1","type":"task","action":"robot.dance_to_audio","params":{"url":"https://youtube.com/watch?v=PtkUNa9_RDk","genre":"classical"}}[/TASK]"
    
-   Example — search returned {genre: "electronic"}:
-   "Let's dance! [TASK]{"protocol":"minipupper-v1","type":"task","action":"robot.dance_to_audio","params":{"url":"https://youtube.com/watch?v=H3bPjH8W_0k","genre":"electronic"}}[/TASK]"
+   IMPORTANT: Never leave genre as "unknown" — always determine it from the song. If truly unsure, use "pop" as last resort.
    
-   Example — search returned {genre: "pop"}:
-   "Let's dance! [TASK]{"protocol":"minipupper-v1","type":"task","action":"robot.dance_to_audio","params":{"url":"https://youtube.com/watch?v=nfWlot6h_JM","genre":"pop"}}[/TASK]"
-   
-   (Use the URL and genre from the search result)
+   (Use the URL from the search result)
 
 4. When the dance task completes: "Done dancing to 'Song Title'!"
 
