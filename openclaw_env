@@ -1,0 +1,217 @@
+# OpenClaw Environment Setup & Dance HF Demo
+
+Step-by-step guide to set up the Mini Pupper with OpenClaw and run the Hugging Face dance demo.
+
+---
+
+## 1. Flash the SD Card
+
+Flash a fresh Raspberry Pi OS (Ubuntu) image onto the SD card using your preferred tool (Raspberry Pi Imager, `dd`, etc.).
+
+---
+
+## 2. Clone Repositories
+
+On the Pi (user `ubuntu`): //will need to change the github repo https
+
+```bash
+# Main app
+git clone https://github.com/gracereginalayndra/Minipupper-Openclaw-Backup-2.git ~/minipupper-app
+
+# Robot control stack
+git clone https://github.com/gracereginalayndra/Minipupper-Openclaw-Backup-2.git ~/StanfordQuadruped/
+```
+
+---
+
+## 3. Service Account Credentials
+
+Place the Google Cloud service account JSON key on the Pi:
+
+```bash
+nano ~/apps-md-robots/20250923.json
+```
+
+Paste the contents of your `20250923.json` key file, then save.
+
+---
+
+## 4. Install Node.js
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Configure global npm prefix (avoids sudo for global installs)
+mkdir -p ~/.npm-global
+npm config set prefix '~/.npm-global'
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+```
+
+---
+
+## 5. Install OpenClaw
+
+```bash
+npm install -g openclaw@2026.5.7
+
+# Verify
+openclaw --version
+```
+
+---
+
+## 6. Install & Configure Tailscale
+
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up
+```
+
+This will print a login link. Open it in a browser and sign in:
+
+- **Email:** `mangdang@mangdang.net`
+- **Password:** `Mangdang2020`
+
+Then click **Connect**.
+
+---
+
+## 7. Python Dependencies
+
+```bash
+pip install webrtcvad
+pip install websocket-client
+```
+
+---
+
+## 8. Configure the Gateway
+
+### 8a. Set the Gateway token
+
+On the Pi, export the gateway token (or add to `~/.bashrc` for persistence):
+
+```bash
+export OPENCLAW_GATEWAY_TOKEN="0761ef748b8f0d837b871ec908b5d1f840c792040c8b9f36"
+```
+
+### 8b. Authorize exec permissions
+
+On the **OpenClaw VM/gateway host**, set the node security to **full** access (not allowlist, not deny):
+
+> ⚠️ **Note:** The correct setting is `full`, not allowlist/deny.
+> Also leave the ask mode as **off** (do not change to `on-miss`).
+
+```bash
+# On the gateway VM:
+openclaw approvals allowlist add --node minipupperv2 "*"
+```
+
+---
+
+## 9. Connect the Node
+
+Open **three terminals** on the Pi (e.g., VS Code integrated terminals).
+
+### Terminal 1 — Run the node
+
+```bash
+export OPENCLAW_GATEWAY_TOKEN="0761ef748b8f0d837b871ec908b5d1f840c792040c8b9f36"
+openclaw node run --host "instance-20260506-083731.tail2df607.ts.net" --port 443 --tls
+```
+
+You'll see a **request ID** printed.
+
+On the **OpenClaw VM**, approve it:
+
+```bash
+openclaw devices approve <request-id>
+```
+
+The terminal should now show `paired · connected`.
+
+### Terminal 2 — Monitor tasks
+
+```bash
+watch -n 2 'cat ~/minipupper-app/tasks.json | tail -n $((LINES-2))'
+```
+
+### Terminal 3 — Run the operator
+
+```bash
+cd ~/minipupper-app && python minipupper_operator.py -k
+```
+
+---
+
+## 10. Troubleshooting
+
+### 10a. Device not approved
+
+If the operator script errors out on connection:
+
+```bash
+# On the gateway VM, check device state
+openclaw devices list
+
+# Should show pending/paired requests. Approve any pending:
+openclaw devices approve <requestID>
+```
+
+### 10b. Cron job not picking up tasks
+
+Check that the cron job ID in the app's `config.yaml` matches the actual cron job ID on the gateway.
+
+On the Pi, check `~/minipupper-app/config/config.yaml` for the `cron_job_id` field.
+On the gateway, list cron jobs:
+
+```bash
+openclaw cron list --include-disabled
+```
+
+If they don't match, copy the gateway's cron job ID into the YAML config.
+
+**Expected log output when working correctly:**
+
+```
+2026-06-29 10:26:20,185 - __main__ - INFO - Phase 2: Triggered cron a3dc8f0c-c459-43b2-8cde-3fa014124c0c for 1 task(s)
+```
+
+### 10c. If cron still doesn't fire
+
+As a fallback, grant full exec access on the gateway:
+
+```bash
+openclaw approvals allowlist add --node minipupperv2 "*"
+```
+
+---
+
+## 11. HF Dance Demo — Rate Limiting
+
+The Hugging Face dance demo downloads audio and sends it to HF Spaces for BPM analysis. If you hit rate limits, you'll need to:
+
+- Download browser cookies and pass them with the request (for authenticated HF access)
+- For demo purposes only, rate limits can be ignored (the demo still works with intermittent failures)
+
+---
+
+## Quick Reference
+
+| Step | Command / Action |
+|------|------------------|
+| Flash SD | Raspberry Pi Imager |
+| Clone app | `git clone ... minipupper-app` |
+| Clone robot | `git clone ... StanfordQuadruped/` |
+| Install Node | `curl ... setup_22.x \| bash` + `apt install -y nodejs` |
+| Install OpenClaw | `npm install -g openclaw@2026.5.7` |
+| Tailscale | `curl ... install.sh \| sh` + `sudo tailscale up` |
+| Python deps | `pip install webrtcvad websocket-client` |
+| Set token | `export OPENCLAW_GATEWAY_TOKEN="0761ef...9f36"` |
+| Run node | `openclaw node run --host ... --port 443 --tls` |
+| Approve device | `openclaw devices approve <id>` (on gateway) |
+| Full exec access | `openclaw approvals allowlist add --node minipupperv2 "*"` |
+| Monitor tasks | `watch -n 2 'cat ~/minipupper-app/tasks.json \| tail -n $((LINES-2))'` |
+| Run operator | `cd ~/minipupper-app && python minipupper_operator.py -k` |
