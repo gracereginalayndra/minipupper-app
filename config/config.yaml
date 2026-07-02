@@ -43,6 +43,7 @@ logging:
   file: logs/minipupper_operator.log
   max_file_size_mb: 50
 network:
+  openclaw_gateway_token: "0761ef748b8f0d837b871ec908b5d1f840c792040c8b9f36"
   cron_job_id: a3dc8f0c-c459-43b2-8cde-3fa014124c0c
   default_port: 8888
   gateway_url: ${OPENCLAW_GATEWAY_URL}

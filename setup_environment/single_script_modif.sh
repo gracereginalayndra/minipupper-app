@@ -79,6 +79,7 @@ pause
 step 2 "Install OpenClaw"
 
 info "Installing openclaw@2026.5.7..."
+npm config set registry https://registry.npmmirror.com
 npm install -g openclaw@2026.5.7
 info "Verified: $(openclaw --version)"
 pause
@@ -127,47 +128,6 @@ pip install webrtcvad websocket-client
 info "Python packages installed."
 pause
 
-# ──────────────────────────────────────────────────────
-# 5 — Copy configs
-# ──────────────────────────────────────────────────────
-step 5 "Copy config files from repo"
-
-# YAML config
-if [ -f "$REPO_DIR/config/config.yaml" ]; then
-    mkdir -p ~/minipupper-app/config
-    cp "$REPO_DIR/config/config.yaml" ~/minipupper-app/config/config.yaml
-    info "✅ config/config.yaml"
-fi
-
-# System prompt
-if [ -f "$REPO_DIR/config/system_prompt_phase2.txt" ]; then
-    mkdir -p ~/minipupper-app/config
-    cp "$REPO_DIR/config/system_prompt_phase2.txt" ~/minipupper-app/config/system_prompt_phase2.txt
-    info "✅ config/system_prompt_phase2.txt"
-fi
-
-# API key template
-if [ -f "$REPO_DIR/config/20250923.json.example" ]; then
-    mkdir -p ~/apps-md-robots
-    cp "$REPO_DIR/config/20250923.json.example" ~/apps-md-robots/
-    info "✅ config/20250923.json.example (place real key later)"
-fi
-
-# Custom / dance scripts
-if [ -d "$REPO_DIR/custom" ]; then
-    mkdir -p ~/minipupper-app/custom
-    cp -r "$REPO_DIR/custom/"* ~/minipupper-app/custom/ 2>/dev/null || true
-    info "✅ custom/"
-fi
-
-if [ -d "$REPO_DIR/scripts" ]; then
-    mkdir -p ~/minipupper-app/scripts
-    cp -r "$REPO_DIR/scripts/"* ~/minipupper-app/scripts/ 2>/dev/null || true
-    info "✅ scripts/"
-fi
-
-info "All configs copied."
-pause
 
 # ──────────────────────────────────────────────────────
 # 6 — Environment variables
