@@ -130,61 +130,45 @@ def _audio_monitor(player, stop_flag_path, poll_interval=1.0, debounce=2,
 
 # -- PID Tracking ------------------------------------------------------------
 
-def _find_dance_pid():
-    """Return PID of the dance background process, or None."""
+def _pid_from_file(path: str):
+    """Return PID from a PID file, or None if not found/alive."""
     try:
-        if os.path.exists(DANCE_PID_FILE):
-            with open(DANCE_PID_FILE) as f:
+        if os.path.exists(path):
+            with open(path) as f:
                 pid = int(f.read().strip())
             try:
                 os.kill(pid, 0)
                 return pid
             except (OSError, ProcessLookupError):
                 pass
-
     except (ValueError, OSError):
         pass
-
     return None
 
-def _find_audio_pid():
-    """Return PID of running ffplay (audio playback), or None."""
+def _graceful_kill(pid: int, label: str = "process"):
+    """SIGTERM, wait up to 2s, SIGKILL if still alive."""
     try:
-        if os.path.exists(AUDIO_PID_FILE):
-            with open(AUDIO_PID_FILE) as f:
-                pid = int(f.read().strip())
+        os.kill(pid, signal.SIGTERM)
+        for _ in range(10):
             try:
                 os.kill(pid, 0)
-                return pid
-            except (OSError, ProcessLookupError):
-                pass
+                time.sleep(0.2)
+            except ProcessLookupError:
+                return
+        try:
+            os.kill(pid, 0)
+            os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    except Exception as e:
+        _log(f"Error killing {label} (PID {pid}): {e}")
 
-    except (ValueError, OSError):
-        pass
-
-    return None
 
 def _stop_audio():
     """Kill audio player and clear flags."""
-    pid = _find_audio_pid()
+    pid = _pid_from_file(AUDIO_PID_FILE)
     if pid is not None:
-        try:
-            os.kill(pid, signal.SIGTERM)
-            for _ in range(10):
-                try:
-                    os.kill(pid, 0)
-                    time.sleep(0.2)
-                except ProcessLookupError:
-                    pass
-                    break
-            try:
-                os.kill(pid, 0)
-                os.kill(pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-
-        except Exception as e:
-            _log(f"Error stopping audio: {e}")
+        _graceful_kill(pid, "audio player")
     for f in [AUDIO_PID_FILE, MUSIC_ACTIVE_FLAG]:
         try:
             os.remove(f)
@@ -685,7 +669,6 @@ def cmd_classify(url: str) -> dict:
     }
 
 
-
 def cmd_search(query: str) -> dict:
     """Search YouTube and return top matches."""
     _log(f"Searching: {query}")
@@ -814,7 +797,6 @@ def _log_debug_choreography(timed: list, genre: str, seed: str, seed_int: int,
             json.dump(debug_data, f, indent=2)
     except OSError:
         pass
-
 
 
 def cmd_dance(url: str, genre_override: str = None, no_activate: bool = True, debug: bool = False) -> dict:
@@ -1128,26 +1110,10 @@ def cmd_execute(state_path: str) -> dict:
 
 def _stop_background_dance():
     """Kill the dance background subprocess immediately."""
-    pid = _find_dance_pid()
+    pid = _pid_from_file(DANCE_PID_FILE)
     if pid is not None:
         _log(f"Killing dance process PID {pid}")
-        try:
-            os.kill(pid, signal.SIGTERM)
-            for _ in range(10):
-                try:
-                    os.kill(pid, 0)
-                    time.sleep(0.2)
-                except ProcessLookupError:
-                    pass
-                    break
-            try:
-                os.kill(pid, 0)
-                os.kill(pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-
-        except Exception as e:
-            _log(f"Error killing dance process: {e}")
+        _graceful_kill(pid, "dance process")
 
 def cmd_stop() -> dict:
     """Stop dancing and audio playback immediately."""
@@ -1208,8 +1174,8 @@ def cmd_stop() -> dict:
 
 def cmd_status() -> dict:
     """Check dance status."""
-    dance_pid = _find_dance_pid()
-    audio_pid = _find_audio_pid()
+    dance_pid = _pid_from_file(DANCE_PID_FILE)
+    audio_pid = _pid_from_file(AUDIO_PID_FILE)
     flag_active = os.path.exists(DANCE_ACTIVE_FLAG)
     result_exists = os.path.exists(DANCE_RESULT_FILE)
     return {

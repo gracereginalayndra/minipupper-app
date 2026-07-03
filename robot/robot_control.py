@@ -407,13 +407,13 @@ def _build_movement(command: str, duration: float, angle: float, time_acc: float
     # ── Genre Signatures ────────────────────────────────────────
     elif command == "head_ellipse":
         """🤘 Head Oscillation — head traces a fast ellipse (head_ellipse)."""
-        move.head_ellipse(interp_num = time_acc*16)
+        move.head_ellipse(interp_num = time_acc*24)
         
         # move.stop(time=0.1)
 
     elif command == "body_ellipse":
         """🎤 Swim — all 4 legs trace circles, body swims in place (body_cycle)."""
-        move.body_ellipse(interp_num = time_acc*16)
+        move.body_ellipse(interp_num = time_acc*24)
         # move.stop(time=0.1)
 
     elif command == "head_cycle":
