@@ -33,12 +33,10 @@ import subprocess
 import sys
 import time
 from local_choreography import enrich_choreography, set_logger, _resolve_genre, _map_angle, GENRE_POOLS
-from dance_face import generate_face_cues, face_cues_from_choreography, DanceFace, TiltState, tilt_display_poller
+from dance_face import face_cues_from_choreography, DanceFace, TiltState, tilt_display_poller
 import random
 import hashlib
 import threading
-
-# -- HF API -----------------------------------------------------------------
 
 # -- Constants ---------------------------------------------------------------
 DANCE_ACTIVE_FLAG = "/tmp/minipupper_dance_active"
@@ -52,7 +50,6 @@ DOWNLOAD_DIR = "/tmp/minipupper_music"
 WAV_DIR = "/tmp/minipupper_dance_wav"
 CACHE_FILE = "/tmp/minipupper_dance_cache.json"
 
-# -- Logging
 # -- Logging -----------------------------------------------------------------
 
 def _log(msg: str):
@@ -85,7 +82,6 @@ def _find_active_pcm():
                 return True
         except (OSError, IOError):
             continue
-    return False
     return False
 
 
@@ -387,7 +383,6 @@ def _parse_hf_result(result_text, duration: float) -> dict:
                 parsed = raw
     except (json.JSONDecodeError, IndexError, KeyError) as e:
         _log(f"HF non-JSON response: {text[:100]}")
-        pass
 
     if not parsed or "error" in parsed:
         return {"error": parsed.get("error", "Could not parse HF Space response")}
@@ -425,33 +420,6 @@ def _activate_robot(build_movement, run_movement):
     run_movement(lib, timeout=5.0)
     _log("Robot activated.")
 
-def generate_lean_move_cues(timed_choreography: list) -> list:
-    """Generate rotation-angle image cues for lean choreography.
-
-    Each 'lean' choreography command maps to 4 body_row sub-moves at
-    angles +20, +10, -10, -20 degrees. Generates a rotation cue for
-    each sub-move so the puppy image smoothly follows the robot's lean.
-
-    Returns list of ("image", 0.0, {"path": filename, "angle": deg}, start_time) tuples.
-
-    Note: Currently superseded by tilt_display_poller() which provides
-    real-time rotation from the actual robot attitude. Kept for reference
-    and future scheduled-cue use.
-    """
-    # The 4 sub-move angles per one "lean" command
-    LEAN_ANGLES = [20, 10, -10, -20]
-    cues = []
-    for cmd, _, angle, start_time in timed_choreography:
-        if cmd == "lean":
-            # Emit one rotation cue per sub-move at the command's start_time
-            # (sub-moves are sequential, so they inherit the parent time)
-            for i, lean_angle in enumerate(LEAN_ANGLES):
-                cues.append(("image", 0.0,
-                             {"path": "dog_straight face-bgrmv.png", "angle": lean_angle},
-                             start_time))
-    return cues
-
-
 def _choreography_loop(build_movement, run_movement,
                        beat_info: dict, timed_choreography: list,
                        wav_file: str, title: str,
@@ -478,19 +446,6 @@ def _choreography_loop(build_movement, run_movement,
 
     # Pre-sort moves so we can calculate timing before audio starts
     sorted_moves = sorted(timed_choreography, key=lambda m: m[3])
-
-    # # ── Pre-expand "lean" commands into body_row sub-moves ──
-    # # Both movement builder and cue generator read the actual angle.
-    # expanded_moves = []
-    # for cmd, time_acc, angle, start_time in sorted_moves:
-    #     if cmd == "lean":
-    #         sub_angles = [20, 10, -10, -20]
-    #         sub_dur = max(time_acc, 0.05)
-    #         for i, sa in enumerate(sub_angles):
-    #             expanded_moves.append(("body_row", sub_dur, sa, start_time + i * sub_dur))
-    #     else:
-    #         expanded_moves.append((cmd, time_acc, angle, start_time))
-    # sorted_moves = expanded_moves
 
     if sorted_moves:
         first_time_acc = sorted_moves[0][1]
@@ -653,9 +608,6 @@ def _choreography_loop(build_movement, run_movement,
     }
 
 
-
-
-
 def _load_cache():
     try:
         with open(CACHE_FILE) as f:
@@ -668,7 +620,7 @@ def _save_cache(cache: dict):
         json.dump(cache, f, indent=2)
 
 def _detect_genre_from_url(url: str) -> dict:
-    """Detect song genre from YouTube metadata."""
+    """Detect song genre from YouTube metadata (tags, channel, title keywords)."""
     _log(f'Detecting genre for: {url}')
     try:
         meta = subprocess.run(
@@ -697,7 +649,6 @@ def _detect_genre_from_url(url: str) -> dict:
             "pop": ["pop", "k-pop", "j-pop", "chart", "mainstream"],
         }
 
-        # Score each genre
         scores = {g: 0 for g in genre_keywords}
         for genre, keywords in genre_keywords.items():
             for kw in keywords:
@@ -721,6 +672,18 @@ def _detect_genre_from_url(url: str) -> dict:
     except Exception as e:
         _log(f'Genre detection error: {e}')
         return {"genre": "pop", "genre_display": "Pop"}
+
+
+def cmd_classify(url: str) -> dict:
+    """Detect genre for a YouTube URL without dancing."""
+    result = _detect_genre_from_url(url)
+    return {
+        "ok": True,
+        "url": url,
+        "genre": result.get("genre", "pop"),
+        "genre_display": result.get("genre_display", "Pop"),
+    }
+
 
 
 def cmd_search(query: str) -> dict:
@@ -884,7 +847,11 @@ def cmd_dance(url: str, genre_override: str = None, no_activate: bool = True) ->
     if not beat_slots:
         return {"ok": False, "error": "HF Space did not return beat_slots"}
 
-    genre = genre_override if genre_override else "pop"
+    if genre_override:
+        genre = genre_override
+    else:
+        detected = _detect_genre_from_url(url)
+        genre = detected.get("genre", "pop")
     genre_display = GENRE_DISPLAY_NAMES.get(genre, f"\U0001f3a4 {genre.capitalize()}")
 
     # Generate genre-appropriate timed moves from Space timing slots
@@ -1004,8 +971,6 @@ def cmd_execute(state_path: str) -> dict:
     # Initialize robot
     try:
         build_movement, run_movement = _init_robot()
-        # if not no_activate:
-        #     _activate_robot(build_movement, run_movement)
     except Exception as e:
         result = {"ok": False, "error": f"Robot init failed: {e}"}
         with open(DANCE_RESULT_FILE, "w") as f:
@@ -1153,17 +1118,8 @@ def cmd_stop() -> dict:
     except Exception as e:
         _log(f"Cleanup error: {e}")
 
-    # THEN: Deactivate robot BEFORE killing the background process
-    # (SIGKILL kills immediately — deactivation won't run in cmd_execute)
-    try:
-        _log("Deactivating robot...")
-    #     subprocess.run(
-    #         ["python3", "/home/ubuntu/minipupper-app/robot/robot_control.py", "deactivate"],
-    #         capture_output=True, timeout=5.0,
-    #     )
-    #     _log("Robot deactivated.")
-    except Exception as e:
-        _log(f"Deactivation error: {e}")
+    # Deactivation handled by cmd_execute background process
+    _log("Deactivating robot...")
 
     # THEN: Kill the background process
     _stop_background_dance()
@@ -1231,6 +1187,9 @@ def main():
     p_search = subparsers.add_parser("search", help="Search YouTube")
     p_search.add_argument("query", nargs="+")
 
+    p_classify = subparsers.add_parser("classify", help="Test genre detection for a URL without dancing")
+    p_classify.add_argument("url", help="YouTube URL")
+
     p_dance = subparsers.add_parser("dance", help="Download audio and dance via HF (background)")
     p_dance.add_argument("url", help="YouTube URL")
     p_dance.add_argument("--genre", "-g", default=None,
@@ -1252,6 +1211,8 @@ def main():
 
     if args.command == "search":
         result = cmd_search(" ".join(args.query))
+    elif args.command == "classify":
+        result = cmd_classify(args.url)
     elif args.command == "dance":
         result = cmd_dance(args.url, genre_override=args.genre, no_activate=args.no_activate)
     elif args.command == "process-task":
