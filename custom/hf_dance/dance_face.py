@@ -4,12 +4,13 @@ dance_face.py — Mini Pupper LCD Face Display for Dance Choreography
 Cycles through REST → TROT → HOP → FINISHHOP faces on the robot's
 LCD display, synced to the song's BPM and genre.
 
-Usage:
-    from dance_face import generate_face_cues, DanceFace
+    from dance_face import face_cues_from_choreography, DanceFace
 
-    cues = generate_face_cues(bpm=120, duration=180.0, genre="pop")
+    cues = face_cues_from_choreography(timed_moves, genre="pop")
     df = DanceFace()
     df.start(cues, stop_flag_path="/tmp/minipupper_dance_active")
+    # ... dance loop runs ...
+    df.stop()
     # ... dance loop runs ...
     df.stop()
 """
@@ -179,44 +180,6 @@ GENRE_PACING = {
 DEFAULT_PACING = 4
 
 
-def generate_face_cues(bpm: float, duration: float, genre: str = "pop") -> list:
-    """
-    Generate face-change cues synced to BPM and genre pacing.
-
-    Returns list of (cmd, time_acc, angle, start_time) tuples compatible
-    with the dance timetable format.
-
-    Fields:
-        cmd        = "display"  (sentinel for the dance loop)
-        time_acc   = 0.0        (instant -- no acceleration)
-        angle      = float      (BehaviorState.value)
-        start_time = float      (seconds from audio start)
-    """
-    if bpm <= 0:
-        bpm = 120
-
-    beat_s = 60.0 / bpm
-    pacing = GENRE_PACING.get(genre.lower(), DEFAULT_PACING)
-    cycle_len = len(FACE_CYCLE)
-
-    cues = []
-    beat_num = 0
-
-    while True:
-        t = beat_num * beat_s
-        if t > duration:
-            break
-
-        if beat_num % pacing == 0:
-            idx = (beat_num // pacing) % cycle_len
-            state_val = float(FACE_CYCLE[idx].value)
-            cues.append(("display", 0.0, state_val, t))
-
-        beat_num += 1
-
-    return cues
-
-
 def _resolve_state(val: float) -> BehaviorState:
     """Convert a stored float back to a BehaviorState enum member."""
     try:
@@ -253,7 +216,7 @@ class DanceFace:
 
         Args:
             cues: (cmd, time_acc, angle, start_time) tuples from
-                  generate_face_cues(), OR simpler (state_val, time) pairs.
+                  face_cues_from_choreography(), OR simpler (state_val, time) pairs.
             audio_delay: Seconds to offset all cue times by.
             stop_flag_path: Thread stops if this file disappears.
         """
@@ -356,7 +319,7 @@ def face_cues_from_choreography(timed_moves: list, genre: str = "pop") -> list:
 
     Returns:
         List of (cmd, time_acc, angle, start_time) tuples in the same
-        format as generate_face_cues().
+        format as face_cues_from_choreography().
     """
     if not timed_moves or not isinstance(timed_moves, list):
         return []
