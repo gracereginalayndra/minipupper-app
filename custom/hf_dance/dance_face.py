@@ -74,7 +74,7 @@ class TiltState:
         self.roll_deg = 0.0
 
 
-LEAN_IMG_NORMAL = "dog_straight face-bgrmv.png"
+LEAN_IMG_NORMAL = "display/dog_straight face-bgrmv.png"
 
 
 def tilt_display_poller(tilt_state, stop_flag_path):

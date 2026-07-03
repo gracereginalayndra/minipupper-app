@@ -49,6 +49,9 @@ python3 hf_dance_to_audio.py classify "https://youtube.com/watch?v=..."
 # Override genre detection (skip YouTube metadata scan)
 python3 hf_dance_to_audio.py dance "https://youtube.com/watch?v=..." --genre rock
 
+# Debug: print seed, genre pool, and every move selected (no robot dance)
+python3 hf_dance_to_audio.py dance "https://youtube.com/watch?v=..." (--genre override) --debug
+
 # Agent pipeline entry point — read a json task file (HF space analysis) and dance with its exact params
 python3 hf_dance_to_audio.py process-task /path/to/task.json
 
@@ -64,6 +67,7 @@ python3 hf_dance_to_audio.py status
 | `search <query>` | Search YouTube, return JSON of top results |
 | `dance <url>` | Full pipeline: download → HF beat analysis → genre detection (YouTube tags) → choreography → launch background dance |
 | `dance <url> --genre <name>` | Same but skip YouTube metadata scan — use specified genre directly |
+| `dance <url> --debug` | Same pipeline but print deterministic seed, genre pool, and every move to stdout + save debug JSON to `/tmp/minipupper_dance_debug.json` |
 | `process-task <file>` | Agent bridge: read a task JSON file, pass its url + genre to the dance pipeline |
 | `stop` | Kill audio, deactivate robot, clear all state flags |
 | `status` | Check if a dance is running and get process/PID info |
@@ -82,6 +86,8 @@ Gemini wrote: { "params": { "url": "...", "genre": "rock" } }
 ```
 
 **`execute`** is not meant to be run manually. When you run `dance <url>`, it saves all analysis results to `/tmp/minipupper_dance_state.json` and spawns a background subprocess running `execute` on that state file. The subprocess activates the robot, plays audio, runs the choreography on beat timestamps, cycles LCD faces, and deactivates when the song ends.
+
+**`--debug` flag** Adding `--debug` (or `-d`) to any `dance` command prints the deterministic seed (SHA-256 of the song URL), the resolved genre, the genre pool moves/weights, and every move selected for each beat slot — with its timestamp, angle, and time_acc. The full choreography is also saved to `/tmp/minipupper_dance_debug.json` as structured JSON. This doesn't affect the robot — the dance still runs normally in the background; the debug info prints to stdout during the setup phase.
 
 Same pipeline as voice — just skipping the TTS/agent middleman.
 

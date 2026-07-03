@@ -757,7 +757,67 @@ def _generate_choreography_from_slots(beat_slots: list, genre: str, seed: str) -
     _log(f"Local choreography from slots: {len(timed)} moves, genre={canonical_genre}")
     return timed
 
-def cmd_dance(url: str, genre_override: str = None, no_activate: bool = True) -> dict:
+DEBUG_FILE = "/tmp/minipupper_dance_debug.json"
+
+
+def _log_debug_choreography(timed: list, genre: str, seed: str, seed_int: int,
+                             beat_info: dict, pool: dict):
+    """Print deterministic seed, genre pool, and every move for debugging."""
+    canonical = _resolve_genre(genre)
+    bpm = beat_info.get("bpm", "?")
+    duration = beat_info.get("duration", "?")
+
+    header = [
+        "=" * 55,
+        f"  Seed:       {seed}",
+        f"  SHA-256:    {seed_int}",
+        f"  Genre:      {genre} ({canonical})",
+        f"  BPM:        {bpm}",
+        f"  Duration:   {duration:.1f}s" if isinstance(duration, (int, float)) else f"  Duration:   {duration}",
+        f"  Total moves:{len(timed)}",
+        f"  Pool moves: {', '.join(pool.get('moves', []))}",
+        f"  Weights:    {pool.get('weights', [])}",
+        "=" * 55,
+    ]
+    # Pad the seed line if it's a URL to keep it readable
+    print("\n".join(header))
+    print(f"  {'Time':>8s}  {'Move':<20s}  {'Angle':>6s}  {'TimeAcc':>7s}")
+    print("  " + "-" * 48)
+    for cmd, time_acc, angle, start_time in timed:
+        angle_str = f"{angle:.0f}°" if isinstance(angle, (int, float)) else str(angle)
+        print(f"  {start_time:>7.2f}s  {cmd:<20s}  {angle_str:>6s}  {time_acc:<7.3f}")
+    print("=" * 55)
+    print()
+
+    # Save full debug JSON
+    try:
+        debug_data = {
+            "seed": seed,
+            "seed_sha256_hex": hex(seed_int),
+            "genre": genre,
+            "canonical_genre": canonical,
+            "bpm": bpm,
+            "duration": duration,
+            "pool_moves": pool.get("moves", []),
+            "pool_weights": pool.get("weights", []),
+            "moves": [
+                {
+                    "time": start_time,
+                    "move": cmd,
+                    "angle": angle,
+                    "time_acc": time_acc,
+                }
+                for cmd, time_acc, angle, start_time in timed
+            ],
+        }
+        with open(DEBUG_FILE, "w") as f:
+            json.dump(debug_data, f, indent=2)
+    except OSError:
+        pass
+
+
+
+def cmd_dance(url: str, genre_override: str = None, no_activate: bool = True, debug: bool = False) -> dict:
     """
     Download -> HF beat analysis -> launch background dance -> return.
 
@@ -860,6 +920,13 @@ def cmd_dance(url: str, genre_override: str = None, no_activate: bool = True) ->
     # Expand compound moves (dip, spin) into atomic sub-moves
     timed = enrich_choreography(timed, genre, url or title)
     _log(f"Final choreography: {len(timed)} moves, genre: {genre_display}")
+
+    # Debug output
+    if debug:
+        pool = GENRE_POOLS.get(_resolve_genre(genre), GENRE_POOLS["pop"])
+        seed_int = int(hashlib.sha256((url or title).encode()).hexdigest(), 16)
+        _log_debug_choreography(timed, genre, url or title, seed_int,
+                                beat_info, pool)
 
     # Generate face-display cues from actual choreography timestamps
     duration = beat_info.get("duration", 180.0)
@@ -1196,6 +1263,8 @@ def main():
                         help="Genre override (rock, classical, pop, jazz, electronic, hiphop, chill)")
     p_dance.add_argument("--no-activate", action="store_true",
                         help="Skip robot activation (assume already standing)")
+    p_dance.add_argument("--debug", "-d", action="store_true",
+                        help="Print seed, genre pool, and every move for debugging")
 
     p_exec = subparsers.add_parser("execute", help="Internal: run choreography")
     p_exec.add_argument("state_file", help="Dance state JSON path")
@@ -1214,7 +1283,7 @@ def main():
     elif args.command == "classify":
         result = cmd_classify(args.url)
     elif args.command == "dance":
-        result = cmd_dance(args.url, genre_override=args.genre, no_activate=args.no_activate)
+        result = cmd_dance(args.url, genre_override=args.genre, no_activate=args.no_activate, debug=args.debug)
     elif args.command == "process-task":
         result = cmd_process_task(args.task_file)
     elif args.command == "execute":
